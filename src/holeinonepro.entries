@@ -34,3 +34,57 @@
 0xb304   # tabla de 0xAFAD, entrada 5
 0xb35c   # tabla de 0xAFAD, entrada 6
 0xb37c   # tabla de 0xAFAD, entradas 7, 8 y 9 (las tres apuntan aqui)
+
+
+# LAS OCHO RUTINILLAS DE OPCION DEL MENU, 0x40E6..0x4116. No se llega a ellas
+# con un salto: 0x40A6 saca la direccion de una de las dos tablas de 0x40CC y
+# 0x40D4 con L_533C, la mete en la pila y hace RET, o sea que el RET salta.
+# Cada una sube o baja UNA opcion del menu, con HL ya apuntando a su variable
+# (la tercera tabla, 0x40DE, dice cual: 0xC003, 0xC007, 0xC005 y 0xC004).
+0x40e6   # bajar PLAYER: alterna 1 y 2 jugadores
+0x40e8   # subir PLAYER
+0x40ef   # bajar COURSE: tres campos, o dos si (0xCED3) esta a cero
+0x40f5   # bajar LEVEL: AVERAGE, EXPERT, PROFESSIONAL
+0x40fd   # subir COURSE
+0x4103   # subir LEVEL
+0x410d   # bajar GAME: cuatro modos, 0 a 3
+0x410f   # subir GAME
+
+
+# LA TABLA DE 0xB2A4, del editor de campos. 0xB29B la pasa a L_AFC5, que es el
+# mismo despachador de `jp (hl)` de 0xAFCE. Cuatro entradas, y las cuatro caen
+# en el hueco de 0xB2B5, o sea que eso es codigo y no datos.
+0xb2b5   # tabla de 0xB2A4, entrada 2
+0xb2b9   # tabla de 0xB2A4, entrada 3
+0xb2cb   # tabla de 0xB2A4, entrada 0
+0xb2cf   # tabla de 0xB2A4, entrada 1
+
+
+# LA ZONA DE CINTA, 0xBDF1..0xBF14, Y POR QUE LLAMA A 0x72D4
+#
+# 0xBE32 hace `call 072d4h`, que cae dentro de los guiones de campo de este
+# mismo cartucho. No es un error de trazado: es que ESA DIRECCION YA NO ES EL
+# CARTUCHO cuando se ejecuta.
+#
+#   L_BE16   ld a,(0fcc1h)  -> EXPTBL[0], la ranura de la ROM principal
+#            ld hl,04000h
+#            jp 00024h      -> ENASLT: la pagina 1 pasa a ser la BASIC ROM
+#
+# La pagina 1 (0x4000-0x7FFF) del cartucho se cambia por la ROM de BASIC, se
+# llaman sus rutinas de casete -0x6FD7, 0x700B, 0x72D4 y 0x72E9 son suyas, no
+# nuestras- y luego L_BE1B devuelve la pagina 1 al cartucho con la ranura que
+# `init` dejo guardada en 0xFEDB. La pagina 2, donde vive todo esto, no se
+# toca en ningun momento; por eso el codigo puede seguir corriendo.
+#
+# Las tres rutinas de aqui abajo se alcanzan metiendolas en la pila, no con un
+# salto, asi que el trazado estatico no llega solo.
+0xbe0e   # el retorno de la carga: TAPIOF, devuelve la pagina 1 al cartucho y sale sin carry
+0xbe63   # escribe por CHPUT la cadena que sigue, hasta el cero
+0xbe7c   # la salida de ERROR: rehace la pila, devuelve la pagina 1 y sale con carry
+
+# CODIGO MUERTO. 0xB885 no lo llama nadie: sus dos bytes no aparecen en ningun
+# sitio de la ROM, y la rutina de antes acaba en un `ret`. Lo que hace se lee
+# solo: monta 10*H+L de (0xCEF9) y devuelve carry si el resultado es cero o
+# pasa de 18, o sea que comprueba un numero de hoyo. Se declara como punto de
+# entrada para que salga desensamblado y se pueda leer.
+0xb885   # codigo muerto: comprueba que un numero de hoyo esta entre 1 y 18

@@ -1,0 +1,1588 @@
+# Anotaciones de Hole in One Professional (HAL Laboratory, MSX1, 1986).
+#
+# Cada linea va anclada a una direccion. Directivas: L=etiqueta, C=comentario de
+# linea, B=cabecera de bloque, D=rango de datos, F=anchura de fila. Sin acentos.
+#
+# EL CARTUCHO. 32 KB en las paginas 1 y 2 (0x4000-0xBFFF). La cabecera AB
+# declara UN solo gancho, INIT en 0x4010, y STATEMENT, DEVICE y TEXT a cero: al
+# reves que el Hole in One de 1984, este cartucho NO registra ninguna sentencia
+# BASIC, o sea que no hay CALL GOLF y la cinta Extension Course no le sirve.
+#
+# El juego lo firman sus propios creditos, expandidos del texto comprimido de
+# 0x51E5 con el interprete de 0x6822:
+#
+#     @ HAL LABORATORY 1985
+#     PRODUCER   F>NAKAMURA
+#     PROGRAMMER S>IWATA
+#
+# (En la fuente del cartucho el '>' hace de punto: F. NAKAMURA y S. IWATA.)
+
+D 0x4000 0x4010 cabecera_ab  Cabecera AB: firma 'AB', INIT=0x4010, y STATEMENT, DEVICE y TEXT a cero mas seis bytes de relleno
+F 0x4000 16
+
+L 0x4010 init  Punto de entrada unico: lo llama la BIOS al arrancar
+
+# ======================================================================
+# EL MENU DE OPCIONES: CUATRO LINEAS Y TRES TABLAS PARALELAS
+# ======================================================================
+# 0x4083 es el bucle del menu. La cruceta mueve el cursor (0xC002, de 0 a 3) o
+# cambia el valor de la linea en la que esta. Para cambiarlo no hay un
+# switch: hay TRES tablas de cuatro entradas indexadas por (0xC002), y el salto
+# se hace metiendo la direccion en la pila y haciendo RET.
+#
+#   0x40CC  que rutina baja el valor
+#   0x40D4  que rutina lo sube
+#   0x40DE  sobre que variable de RAM trabaja
+#
+# de modo que la linea 0 toca 0xC003, la 1 toca 0xC007, la 2 toca 0xC005 y la 3
+# toca 0xC004. Y los rotulos que se ven salen de otras tres tablas, 0x5345,
+# 0x534D y 0x5353, que apuntan a los textos de 0x51E5.
+#
+#   linea 0  PLAYER  (0xC003)  1 o 2
+#   linea 1  LEVEL   (0xC007)  AVERAGE / EXPERT / PROFESSIONAL
+#   linea 2  GAME    (0xC005)  STROKE PLAY / MATCH PLAY / TOURNAMENT / CONSTRUCTION
+#   linea 3  COURSE  (0xC004)  QUEEN SIDE / KING SIDE / USER
+#
+# COURSE solo llega a USER si (0xCED3) no es cero, o sea si hay un campo de
+# usuario cargado: 0x40EF y 0x40FD lo comprueban y, si no lo hay, se desvian a
+# las rutinas de dos valores.
+D 0x40cc 0x40d4 menu_baja  Cuatro punteros: la rutina que BAJA el valor de cada linea del menu (0x40E6, 0x40F5, 0x410D y 0x40EF)
+F 0x40cc w4
+D 0x40d4 0x40dc menu_sube  Cuatro punteros: la rutina que SUBE el valor de cada linea (0x40E8, 0x4103, 0x410F y 0x40FD)
+F 0x40d4 w4
+D 0x40dc 0x40de menu_cola  Dos bytes que ninguna de las tres tablas alcanza; leidos como puntero darian 0x4E41
+F 0x40dc 2
+D 0x40de 0x40e6 menu_variables  Cuatro punteros a RAM: sobre que variable trabaja cada linea (0xC003, 0xC007, 0xC005 y 0xC004)
+F 0x40de w4
+
+L 0x40e6 menu_alterna_baja  Alterna 1 y 2 jugadores: resta uno y enmascara con 1
+L 0x40e8 menu_alterna_sube  Alterna 1 y 2 jugadores: suma uno y enmascara con 1
+L 0x40ef menu_campo_baja  Baja COURSE; si no hay campo de usuario cae en la version de dos valores
+L 0x40f5 menu_nivel_baja  Baja LEVEL entre 0 y 2, dando la vuelta por arriba
+L 0x40fd menu_campo_sube  Sube COURSE; si no hay campo de usuario cae en la version de dos valores
+L 0x4103 menu_nivel_sube  Sube LEVEL entre 0 y 2, dando la vuelta por abajo
+L 0x410d menu_modo_baja  Baja GAME, enmascarado con 3
+L 0x410f menu_modo_sube  Sube GAME, enmascarado con 3
+
+# ======================================================================
+# LOS DOS CAMPOS DEL CARTUCHO, Y EL TERCERO QUE SE CARGA
+# ======================================================================
+# 0x4134 elige el campo segun (0xC004) y guarda el puntero en (0xC000):
+#
+#   0x716B  QUEEN SIDE   dieciocho punteros
+#   0x718F  KING SIDE    otros dieciocho
+#   0xCF97  USER         en RAM, el que trae el modo CONSTRUCTION
+#
+# o sea que los TREINTA Y SEIS punteros de 0x716B..0x71B3 son DOS campos de
+# dieciocho hoyos, no uno.
+L 0x4116 empieza_la_partida  Arranca la vuelta: pone a cero el estado, elige campo y jugadores, y si GAME es CONSTRUCTION se va al editor
+
+# ======================================================================
+# LOS RESULTADOS DEL HOYO, 0x4C0B: DOS FILAS DE SIETE
+# ======================================================================
+# 0x4BFD escribe DOS filas de siete caracteres, en 0x1A42 y 0x1A62, con el
+# interprete de texto de 0x6822. Detras de cada uno de los OCHO mensajes de
+# resultado va un byte suelto que NO se dibuja: es el numero de pista de PSG
+# que suena al enseñarlo, y 0x456C lo lee justo por eso.
+#
+#   0x4C0B  HOLE IN ONE    pista 3      0x4C44  BOGEY          pista 7
+#   0x4C1A  ALBATROSS      pista 3      0x4C4D  DOUBLE BOGEY   pista 7
+#   0x4C29  EAGLE          pista 8      0x4C5C  TRIPLE BOGEY   pista 7
+#   0x4C32  BIRDIE         pista 9
+#   0x4C3B  PAR            pista 10
+#
+# Los siete de ALBATROSS a TRIPLE BOGEY se eligen por la tabla de 0x4CBA, con
+# el indice (golpes - par + 3) acotado a 0..6; HOLE IN ONE es aparte, porque no
+# depende del par sino de haber metido la bola de un solo golpe.
+D 0x4c0b 0x4c1a texto_hoyo_en_uno  "HOLE IN ONE", y detras su pista de PSG (3)
+D 0x4c1a 0x4c29 texto_albatros  "ALBATROSS", y detras su pista de PSG (3)
+D 0x4c29 0x4c32 texto_eagle  "EAGLE", y detras su pista de PSG (8)
+D 0x4c32 0x4c3b texto_birdie  "BIRDIE", y detras su pista de PSG (9)
+D 0x4c3b 0x4c44 texto_par  "PAR", y detras su pista de PSG (10)
+D 0x4c44 0x4c4d texto_bogey  "BOGEY", y detras su pista de PSG (7)
+D 0x4c4d 0x4c5c texto_bogey_doble  "DOUBLE BOGEY", y detras su pista de PSG (7)
+D 0x4c5c 0x4c6b texto_bogey_triple  "TRIPLE BOGEY", y detras su pista de PSG (7)
+D 0x4c6b 0x4c73 texto_calle  "FAIRWAY": donde ha caido la bola
+D 0x4c73 0x4c7b texto_rough  "ROUGH"
+D 0x4c7b 0x4c83 texto_bunker  "BUNKER"
+D 0x4c83 0x4c91 texto_agua  "WATER HAZARD"
+D 0x4c91 0x4c96 texto_ob  "OB", fuera de limites
+D 0x4c96 0x4c9b texto_on  "ON", y detras el codigo escribe el numero de golpes
+D 0x4c9b 0x4ca6 texto_hoyo_acabado  "HOLE OUT"
+D 0x4ca6 0x4cae texto_desempate  "PLAYOFF"
+D 0x4cae 0x4cba texto_dormy  "DORMY HOLE", del MATCH PLAY: quedan tantos hoyos como ventaja
+D 0x4cba 0x4cc8 tabla_resultados  Siete punteros, indice (golpes - par + 3): ALBATROSS, EAGLE, BIRDIE, PAR, BOGEY, DOUBLE BOGEY y TRIPLE BOGEY
+F 0x4cba w4
+
+# ======================================================================
+# LOS TREINTA Y CINCO GOLFISTAS DEL TORNEO
+# ======================================================================
+# Son nombres REALES del circuito de mediados de los ochenta, guardados uno
+# detras de otro sin puntero ni longitud: el ultimo caracter de cada nombre
+# lleva el bit 7 puesto, y eso es todo el terminador. El '>' hace de punto.
+#
+#   C>STRANGE   L>WADKINS   C>PEETE     R>FLOYD     C>PAVIN
+#   M>OMEARA    C>STADLER   B>LANGER    T>WATSON    F>ZOELLER
+#   R>MALTBIE   H>IRWIN     T>KITE      P>STEWART   L>MIZE
+#   H>SUTTON    J>SINDELAR  J>MAHAFFEY  S>BALLESTEROS  P>JACOBSEN
+#   L>RINKER    B>EASTWOOD  D>POOLEY    G>BURNS     S>SIMPSON
+#   I>AOKI      L>NELSON    J>NICKLAUS  G>NORMAN    L>TREVINO
+#   T>NAKAJIMA  M>KURAMOTO  B>LIETZKE   T>OZAKI     N>OZAKI
+D 0x5009 0x5130 nombres_de_golfistas  Los 35 rivales del modo TOURNAMENT, en ASCII y pegados: el bit 7 del ultimo caracter marca el final de cada nombre
+D 0x5130 0x5153 golfistas_ajuste  Un byte por golfista, de 0 a 7, que 0x4F1C suma al azar antes de mirar la tabla de probabilidad: cuanto mas alto, mejor sale la bola
+F 0x5130 16
+D 0x5153 0x5159 tabla_probabilidad  Tres punteros a las tres tablas de probabilidad, elegidos por el signo de (0xC0F5)
+F 0x5153 w4
+D 0x5159 0x5163 probabilidad_a  Pares (umbral, golpes sobre el par): 0x08 -> +2, 0x24 -> +1, 0xB3 -> par, 0xFB -> -1, 0xFF -> -2
+F 0x5159 2
+D 0x5163 0x516d probabilidad_b  La misma tabla, con el par mas facil: 0x08, 0x31, 0xCA, 0xFD, 0xFF
+F 0x5163 2
+D 0x516d 0x5175 probabilidad_c  La tercera, de cuatro pares y sin el -2: 0x0D, 0x45, 0xD4, 0xFF
+F 0x516d 2
+
+# ======================================================================
+# LOS TEXTOS DE LA PANTALLA DE TITULO, 0x51E5
+# ======================================================================
+# 0x51BF los suelta en la tabla de nombres, cuatro filas de veintiun caracteres
+# desde 0x1A46. El texto va comprimido: un byte por debajo de 0x10 son ESE
+# numero de espacios, uno entre 0x10 y 0x1F repite el caracter siguiente, y de
+# 0x20 para arriba es el caracter tal cual.
+#
+# La gracia del bloque es que los valores POR DEFECTO del menu son al mismo
+# tiempo la primera entrada de cada tabla de rotulos: AVERAGE esta en 0x5238,
+# STROKE PLAY en 0x524D y QUEEN SIDE en 0x5262, todos dentro del texto del menu.
+D 0x51e5 0x5224 texto_creditos  Cuatro filas: "@ HAL LABORATORY 1985", una en blanco, "PRODUCER F>NAKAMURA" y "PROGRAMMER S>IWATA"
+D 0x5224 0x526e texto_menu  Las cuatro lineas del menu con sus valores de fabrica; AVERAGE (0x5238), STROKE PLAY (0x524D) y QUEEN SIDE (0x5262) hacen doblete como primera entrada de sus tablas
+D 0x526e 0x527a texto_nivel_experto  "EXPERT"
+D 0x527a 0x5286 texto_nivel_profesional  "PROFESSIONAL", el rotulo que da nombre al cartucho
+D 0x5286 0x5292 texto_campo_king  "KING SIDE", el segundo campo del cartucho
+D 0x5292 0x529e texto_campo_usuario  "USER", el campo que trae el modo CONSTRUCTION
+D 0x529e 0x52aa texto_modo_match  "MATCH PLAY"
+D 0x52aa 0x52b6 texto_modo_torneo  "TOURNAMENT"
+D 0x52b6 0x52c2 texto_modo_construccion  "CONSTRUCTION", el editor de campos
+D 0x52c2 0x52de texto_pantalla_torneo  La pantalla del torneo: el rotulo TOURNAMENT y las dos lineas " 1UP: " y " 2UP: " donde se teclean los nombres
+D 0x5345 0x534d tabla_rotulos_modo  Cuatro punteros a los rotulos de GAME
+F 0x5345 w4
+D 0x534d 0x5353 tabla_rotulos_campo  Tres punteros a los rotulos de COURSE
+F 0x534d w4
+D 0x5353 0x5359 tabla_rotulos_nivel  Tres punteros a los rotulos de LEVEL
+F 0x5353 w4
+
+# ======================================================================
+# EL MARCADOR DE DIECIOCHO HOYOS
+# ======================================================================
+# Dos tablas de dieciocho direcciones de VRAM, una por columna del marcador.
+# Los nueve primeros valores van de 0x20 en 0x20 -o sea de fila en fila- y los
+# nueve siguientes son los mismos mas 0x0F: la ida y la vuelta, hoyos 1 al 9 a
+# la izquierda y 10 al 18 a la derecha. Y no son de la tabla de nombres de
+# 0x1800 sino de la SEGUNDA, la de 0x1C00.
+D 0x49b4 0x49d8 marcador_golpes_vram  Dieciocho direcciones de VRAM, una por hoyo, donde va el numero de golpes del marcador
+F 0x49b4 w4
+D 0x4a18 0x4a3c marcador_hoyos_vram  Las mismas dieciocho, seis columnas a la izquierda: ahi va el numero de hoyo
+F 0x4a18 w4
+
+# ======================================================================
+# LOS QUINCE PALOS
+# ======================================================================
+# Tres bytes por palo: el primero agrupa el swing (0x00 las maderas, 0x04 y
+# 0x08 los hierros, 0x0C los wedges y el putter) y los otros dos son las dos
+# letras que se ven en el panel.
+#
+#   1W 2W 3W 4W  |  3I 4I 5I 6I  |  7I 8I 9I  |  PW SW PT PT
+#
+# La ultima entrada repite PT. Y esta tabla es una de las 24 tiras que este
+# cartucho comparte con el CONST de la cinta Extension Course de 1985: alli
+# ocupa 0x89C4, byte a byte igual.
+D 0x4b16 0x4b43 tabla_palos  Quince palos de tres bytes: grupo de swing y las dos letras del rotulo
+F 0x4b16 3
+D 0x4b43 0x4b47 texto_club  Las cuatro letras de "CLUB", el rotulo del panel
+F 0x4b43 4
+
+# ======================================================================
+# TRAMO 1: ARRANQUE, MENU Y BUCLE DE LA VUELTA  (0x4010..0x49B4)
+# ======================================================================
+
+# --- init, 0x4010 -----------------------------------------------------
+C 0x4010 lo primero es averiguar en que ranura esta el propio cartucho
+C 0x4013 RSLREG devuelve los cuatro pares de bits; los dos de la pagina 1 se bajan a los de abajo
+C 0x4015 y se quedan los dos bits de la ranura primaria
+C 0x401a 0xFCC1 es SLTTBL: si la ranura es expandida, dice que subranura hay puesta
+C 0x401e mezcla el numero de ranura con el de subranura
+C 0x4020 cuatro adelante para llegar al byte de la pagina 2
+C 0x4025 de la pagina 2 solo interesan los dos bits de subranura
+C 0x4028 y el resultado se guarda en 0xFEDB para todo lo que venga despues
+C 0x402b a partir de aqui no puede saltar la interrupcion
+C 0x402c la pila, justo debajo de la RAM de trabajo
+C 0x4032 mete el propio cartucho en la pagina 2, que es donde vive su segunda mitad
+C 0x4038 borra de una tirada 0xC002-0xF300: toda la RAM de trabajo
+C 0x4045 el campo de fabrica es QUEEN SIDE, o sea la tabla de 0x716B
+C 0x404b 0x12 es +18: un golpe por encima del par en cada uno de los dieciocho hoyos
+C 0x4050 y 0xC0F6-0xC111 se rellena de espacios, que es donde van los nombres del torneo
+C 0x405d deja el reproductor de PSG en reposo
+C 0x4060 engancha la interrupcion en H.TIMI
+C 0x4063 monta en RAM las tablas que la fisica del golpe lee por indice
+C 0x4066 la exhibicion: el cartucho juega solo hasta que alguien toca el mando
+C 0x4069 vuelta al menu: la pila se rehace porque se llega aqui desde cualquier sitio
+C 0x406c pone el generador de azar en marcha
+C 0x406f los creditos, y detras la exhibicion de los dieciocho hoyos
+C 0x4072 0x5224 es el texto del menu con sus valores de fabrica
+C 0x4078 y pinta los cuatro rotulos elegidos
+C 0x407b espera a que suelten el disparo antes de entrar al menu
+C 0x4083 el bucle del menu
+C 0x4086 disparo: empieza la partida
+C 0x408c lee la cruceta, ya filtrada contra la repeticion
+C 0x408f el bit 0 dice si hay direccion; lo que queda arriba dice cual
+C 0x4093 0xC002 es la linea del cursor, de 0 a 3
+C 0x4096 codigo 1: baja el cursor
+C 0x4098 codigo 3: sube el valor de la linea
+C 0x409b codigo 5: sube el cursor
+C 0x409e cualquier otra direccion baja el valor: tabla de las rutinas que restan
+C 0x40a3 y esta es la de las que suman
+C 0x40a6 el indice de las tres tablas es la linea del cursor
+C 0x40a9 saca de la tabla la rutina que toca
+C 0x40ac se guarda en la pila: el RET de abajo saltara a ella
+C 0x40ad y de la tercera tabla, sobre que variable trabaja
+C 0x40b6 HL queda apuntando a la variable
+C 0x40b7 y este RET es en realidad el salto a la rutina de la opcion
+C 0x40b8 subir el cursor es sumar uno, o sea dos INC y el DEC de abajo
+C 0x40ba baja el cursor y lo enmascara: da la vuelta de 3 a 0
+C 0x40bf repinta los cuatro rotulos con el valor nuevo
+C 0x40c2 y espera a que suelten la cruceta antes de admitir otra
+C 0x40e6 restar uno y enmascarar con 1 es alternar entre 1 y 2 jugadores
+C 0x40ed vuelve a 0x40BF a repintar
+C 0x40ef si (0xCED3) esta a cero no hay campo de usuario
+C 0x40f3 y entonces COURSE solo tiene dos valores: se trata como un alternador
+C 0x40f5 baja el nivel
+C 0x40f6 si no se ha pasado por debajo de cero, ya esta
+C 0x40f9 y si se ha pasado, da la vuelta a PROFESSIONAL
+C 0x40fd lo mismo por arriba: sin campo de usuario, COURSE alterna
+C 0x4103 sube el nivel
+C 0x4105 tres niveles: 0, 1 y 2
+C 0x4109 y del tercero se vuelve al primero
+C 0x410d cuatro modos de juego, asi que basta con enmascarar con 3
+C 0x4111 y la mascara le da la vuelta sola en los dos sentidos
+
+# --- empieza_la_partida, 0x4116 --------------------------------------
+C 0x4116 borra las banderas de la vuelta anterior
+C 0x4123 0xC119 es la cadencia del contador de fuerza; 4 es la de fabrica
+C 0x4128 GAME a 3 es CONSTRUCTION
+C 0x412d y eso no es una partida: se va al editor de campos
+C 0x4130 COURSE elige entre los dos campos del cartucho y el de RAM
+C 0x4134 0x716B son los dieciocho punteros de QUEEN SIDE
+C 0x4139 0x718F los de KING SIDE, justo detras
+C 0x413f y 0xCF97 el campo de usuario, que vive en RAM
+C 0x4142 (0xC000) queda apuntando al campo elegido para toda la vuelta
+C 0x4145 PLAYER a 1 quiere decir dos jugadores
+C 0x414c con dos jugadores no hay ordenador que juegue
+C 0x414e y en STROKE PLAY tampoco
+C 0x4154 pero en MATCH PLAY y TOURNAMENT con un jugador el rival lo lleva la maquina
+C 0x415b 0xFF en 0xC116 quiere decir que ningun jugador es la maquina
+C 0x415d y si lo hay, 0xC116 guarda cual
+C 0x4160 GAME a 2 es TOURNAMENT
+C 0x4167 0x52C2 es la pantalla del torneo, con las dos lineas de nombre
+C 0x4172 pide el nombre del jugador 1
+C 0x417a y el del 2 solo si hay dos jugadores
+C 0x4185 si no, la maquina se monta su cuadro de rivales
+C 0x4188 y se ordena la clasificacion de salida
+C 0x418b monta SCREEN 2 y decomprime todo lo que va en VRAM
+C 0x418e la segunda tabla de nombres, la de 0x1C00, con el marcador
+C 0x4194 y los numeros de hoyo del marcador
+C 0x419a la musica de la vuelta
+C 0x419f a partir de aqui, todos los contadores de la partida a cero
+C 0x41ba 0xCEC3 es el hoyo, de 0 a 17
+C 0x41c6 0xFF en 0xC072 y 0xC073: en MATCH PLAY todavia no hay quien vaya ganando
+C 0x41cd escribe el panel de la izquierda
+C 0x41d6 con un solo jugador se tapan las dos lineas del segundo
+C 0x41e2 empieza el hoyo: los golpes y el desnivel a cero
+C 0x41f7 borra el rotulo de distancia
+C 0x41fa pinta el marcador
+C 0x41fd monta el hoyo en el buffer de RAM
+C 0x4200 y lo vuelca a la VRAM con el barrido de arriba abajo
+C 0x4203 0xC00D-0xC010 arrancan en la bandera: los dos jugadores salen apuntando a ella
+C 0x4213 0x4CAE es DORMY HOLE, que solo se enseña si (0xC076) lo pide
+C 0x421d empieza el golpe: decide a quien le toca
+C 0x4220 y pone el rotulo del hoyo y el par
+C 0x4223 0xC009 es el jugador que juega
+C 0x4226 IY apunta a su estado: 0xC00B el jugador 1, 0xC00C el 2
+C 0x422f estado 2 es "en el green"
+C 0x4239 y entonces (0xC011) se pone a uno: se juega la vista de putt
+C 0x423c un golpe mas para este jugador
+C 0x423f repinta el marcador
+C 0x4242 y la vista que toque, campo o green
+C 0x4248 coloca la bola donde este
+C 0x424e apunta a la bandera
+C 0x4251 guarda el punto de mira de partida
+C 0x4254 y calcula la distancia que queda
+C 0x4257 (IY+9) es el palo con el que jugo la ultima vez
+C 0x4261 si el que juega es la maquina...
+C 0x426a a partir del septimo golpe la maquina afloja el ritmo del contador
+C 0x4276 0xC118 avisa a la rutina del golpe de que no hay que leer el mando
+C 0x427b en el green la maquina putea con otra rutina
+C 0x4281 la maquina elige palo, direccion y fuerza
+C 0x428f y en el green, solo fuerza y direccion
+C 0x429a el palo que ha elegido
+C 0x42a0 la mecanica del golpe: contador de fuerza, curva y salida de la bola
+C 0x42a9 en el green se salta todo el vuelo de la bola
+C 0x42b0 si la bola no se ha movido de donde estaba...
+C 0x42bd ...es que ha entrado: hoyo acabado
+C 0x42c0 vuelo terminado, a ver donde ha caido
+C 0x42c4 recoloca la camara
+C 0x42c7 espera un poco
+C 0x42ca devuelve la vista normal
+C 0x42cd redibuja la escena
+C 0x42d0 0xC633 y 0xC635 son las banderas de "ha entrado" y "se ha ido fuera"
+C 0x42da 0xC638 dice que ha caido en el agua
+C 0x42e0 0xC637, que ha llegado al green
+C 0x42e6 0xC636, que ha caido en bunker
+C 0x42ec 0x4C6B es FAIRWAY
+C 0x42ef y 0xC639 distingue la calle del rough
+C 0x42f5 0x4C73 es ROUGH
+C 0x42fe 0x4C7B es BUNKER
+C 0x4307 el agua: la bola vuelve al punto de caida marcado
+C 0x4313 y se apunta que hay penalizacion
+C 0x4318 el golpe de castigo
+C 0x431b 0x4C83 es WATER HAZARD
+C 0x4326 fuera de limites: se corta el sonido
+C 0x4331 0x4C91 es OB
+C 0x4337 y la bola vuelve al sitio desde el que se golpeo
+C 0x4343 con su golpe de castigo
+C 0x4353 estado 2: la bola esta en el green
+C 0x4357 pasa el punto de mira a las coordenadas del green
+C 0x435d 0x4C96 es ON, y detras va el numero de golpes
+C 0x4363 los golpes que ha costado llegar
+C 0x4371 guarda el punto de caida para el proximo golpe
+C 0x4388 compara los dos jugadores: devuelve el signo de la diferencia
+C 0x4398 cierra el golpe y decide si sigue el mismo jugador
+C 0x439b si la vuelta ya ha acabado, no hay mas golpes
+C 0x43a1 en STROKE PLAY se sigue golpeando sin mas
+C 0x43a8 0xC071 solo esta puesto en MATCH PLAY
+C 0x43af y hasta que los dos no acaben el hoyo no se cuenta
+C 0x43b5 quien gana el hoyo es el que menos golpes ha dado
+C 0x43bd el tanteo del MATCH PLAY: quien va arriba y por cuantos
+C 0x43c7 0xC074 es la ventaja y 0xC073 quien la tiene
+C 0x43d5 si el hoyo lo gana el mismo que iba delante, sube la ventaja
+C 0x43d8 y si lo gana el otro, baja
+C 0x43db al llegar a cero el partido queda igualado
+C 0x43e5 primer hoyo ganado: se abre la cuenta
+C 0x43ed a partir de tres arriba la musica cambia
+C 0x4401 la cadencia del contador de fuerza para el proximo golpe
+C 0x4407 repinta el marcador de dieciocho casillas
+C 0x4410 0x11 son diecisiete: los hoyos que quedan
+C 0x4418 si la ventaja es mayor que los hoyos que quedan, el partido esta decidido
+C 0x442b hay ganador
+C 0x442e en MATCH PLAY el resultado se escribe con "AND"
+C 0x4431 en los demas modos, la clasificacion del torneo
+C 0x4437 0x1ECB y 0x1ED5 son las dos lineas del resultado, en la tercera pantalla
+C 0x4444 la ventaja, en hoyos
+C 0x4451 escribe A, N y D: "3 AND 2"
+C 0x4460 y los hoyos que quedaban por jugar
+C 0x446d empate: se sigue jugando
+C 0x4478 0x4CA6 es PLAYOFF
+C 0x447e el desempate empieza en el hoyo siguiente
+C 0x4483 y si ya no quedan, se vuelve al 16
+C 0x448c la bola ha entrado
+C 0x4491 estamos en el green
+C 0x4497 espera
+C 0x449d si ha entrado, se acabo el hoyo
+C 0x44a4 recoloca la vista del green
+C 0x44ab el jugador vuelve al estado 1
+C 0x44b5 y se mira el green desde el otro lado un momento
+C 0x44c1 los sprites del jugador 1 empiezan en 0x1B00 y los del 2 cuatro bytes despues
+C 0x44ce coloca el sprite de la bola en el green
+C 0x44de color 4, el de la bola
+C 0x44e3 pista 4: la de meter la bola
+C 0x44eb estado 3: hoyo terminado
+C 0x44f5 en MATCH PLAY no se acumulan golpes
+C 0x4501 la diferencia entre los golpes dados y el par
+C 0x450e se suma al acumulado de la vuelta
+C 0x4514 y los golpes se apuntan en la casilla del hoyo
+C 0x4520 -4 porque la tabla de golpes empieza cuatro bytes antes
+C 0x4524 y los hoyos del 10 al 18 van en la segunda mitad de la tabla
+C 0x4534 elige la casilla del jugador que esta jugando
+C 0x4546 0x4C0B es HOLE IN ONE
+C 0x4549 un solo golpe es hoyo en uno, sin mirar el par
+C 0x4550 si no, el resultado es golpes menos par
+C 0x4558 mas tres, para que ALBATROSS caiga en el indice 0
+C 0x455a por debajo de -3 o por encima de +3 no hay rotulo
+C 0x4562 la tabla de los siete rotulos
+C 0x4569 dibuja el rotulo
+C 0x456c y el byte que va detras del texto es la pista que suena
+C 0x4576 lo deja en pantalla un rato
+C 0x4579 y calla el PSG
+C 0x457c con un solo jugador y STROKE PLAY se pasa al hoyo siguiente
+C 0x4598 estado 3 es que el otro tambien ha acabado
+C 0x45a0 MATCH PLAY: el hoyo se cierra cuando acaban los dos
+C 0x45cb quien ha quedado por delante en este hoyo
+C 0x45db repinta el marcador
+C 0x45de en TOURNAMENT hay que actualizar la clasificacion
+C 0x45e5 la diferencia con el par de este jugador
+C 0x45ef y si juega la maquina, la del rival
+C 0x4602 compara el acumulado de los dos jugadores
+C 0x460c cuatro es la cadencia normal
+C 0x4614 tres golpes o mas de ventaja: cadencia 2
+C 0x461d tres golpes o mas por detras: cadencia 6
+C 0x4627 rehace la clasificacion del torneo
+C 0x462d hoyo siguiente
+C 0x4632 diecisiete es el ultimo
+C 0x4636 en TOURNAMENT queda la clasificacion final
+C 0x4649 y si quedan hoyos, se monta el siguiente
+C 0x4656 0xC076 pide el rotulo DORMY HOLE en el proximo hoyo
+C 0x465f el estado de la ventaja para el hoyo que viene
+C 0x466b fin de la vuelta: el mejor resultado
+C 0x4672 RST 20h compara HL con DE
+C 0x4677 y si hay segundo jugador, tambien el suyo
+C 0x468c 0xC060 guarda el mejor de la partida
+C 0x4692 escribe el total del jugador 1
+C 0x46aa y el del 2
+C 0x46bc borra el rotulo de distancia
+C 0x46bf 0x4C9B es HOLE OUT
+C 0x46c5 deja mirar la pantalla
+C 0x46cf en el torneo, si se ha ganado suena la fanfarria
+C 0x46de pista 11
+C 0x46ea y vuelta al menu
+C 0x46ed repinta la vista que toque
+C 0x46f4 la del green
+C 0x46f7 o la del campo
+C 0x46fa a quien le toca: en golf juega el que esta mas lejos
+C 0x46fb de fabrica, el jugador 1
+C 0x46fe sin segundo jugador no hay nada que decidir
+C 0x4703 si uno de los dos ya ha acabado, juega el otro
+C 0x470e y si el otro tambien, tampoco hay nada que decidir
+C 0x471a los dos estados a la vez
+C 0x471e si el segundo va mas adelantado, juega el primero
+C 0x4722 los dos en el green: se mide la distancia de verdad
+C 0x4726 y se juega la vista del green
+C 0x4738 distancia del jugador 2 al hoyo
+C 0x473f y la del 1
+C 0x4744 juega el que este mas lejos
+C 0x4748 apunta el jugador y su objetivo
+C 0x475c distancia de un jugador a la bandera
+C 0x4760 la diferencia en X, en valor absoluto
+C 0x4769 y la diferencia en Y
+C 0x4770 las dos a la mitad, para que quepan
+C 0x4774 y la raiz de la suma de cuadrados
+C 0x4777 el jugador que esta jugando
+C 0x477a 0xC00D es la posicion objetivo del jugador 1 y 0xC00E la del 2
+C 0x4781 0xC63F es la bola en la vista del campo
+C 0x4789 y 0xC63D en la del green
+C 0x478d guarda el punto de mira de partida
+C 0x479a la distancia que queda a la bandera
+C 0x47a9 y se enseña en el panel
+C 0x47b0 vector de la bola al punto de mira, con signo
+C 0x47ca si las dos componentes tienen el mismo signo cabe tal cual
+C 0x47d4 y si no, se dividen las dos por dos para que no desborde
+C 0x47dc raiz de la suma de cuadrados
+C 0x47df el par manda: la escala para pasar del campo al green sale de la tabla de 0x4842
+C 0x47f5 la componente X del vector
+C 0x4800 escalada por el factor del par
+C 0x4807 y montada sobre la posicion en el green
+C 0x480a lo mismo con la Y
+C 0x481f sin rival no hay nada mas que hacer
+C 0x4824 y si el rival no esta en el green, tampoco
+C 0x4832 el registro R de refresco hace de moneda al aire
+C 0x4836 dos pixeles a un lado
+C 0x483a o dos al otro
+C 0x483c para que los dos no apunten exactamente al mismo sitio
+
+# --- 0x4848..0x49B4 ---------------------------------------------------
+C 0x4848 prepara la vista del green
+C 0x4851 el angulo se guarda con 0x80 de sesgo, o sea 0 grados en el centro
+C 0x4856 y la bola pasa de las coordenadas del campo a las del green
+C 0x4862 espera a que la camara acabe de moverse
+C 0x486f repinta las dos lineas de golpes del panel
+C 0x4872 0x18C7 es la del jugador 1
+C 0x487f y 0x18E7 la del 2, si lo hay
+C 0x4885 en MATCH PLAY, en vez de totales va la ventaja
+C 0x488b el TOP, el total del jugador 1 y el del 2
+C 0x48a8 borra el signo que hubiera delante
+C 0x48af el cero se escribe sin signo
+C 0x48b1 0x3C es el signo mas
+C 0x48b6 si el total es negativo...
+C 0x48bb ...se le da la vuelta
+C 0x48c1 y el signo pasa a ser el menos, 0x3D
+C 0x48c3 mas de 255 no cabe: se escribe 99
+C 0x48c9 escribe el numero
+C 0x48ce y retrocede hasta el primer hueco para poner ahi el signo
+C 0x48de en MATCH PLAY se escribe la ventaja y de quien es
+C 0x48f7 el marcador de dieciocho casillas
+C 0x48fb con la vuelta acabada ya no se toca
+C 0x48fc la casilla del hoyo que se juega
+C 0x4906 en MATCH PLAY el marcador es otro
+C 0x490d los golpes del jugador 1
+C 0x4917 cuatro columnas mas a la derecha, los del 2
+C 0x4922 0x1E49 son los hoyos 1 al 9 y 0x1E58 los del 10 al 18
+C 0x4933 el acumulado hasta este hoyo
+C 0x494a delante del numero va un simbolo segun el par
+C 0x494f 0xD5 si se ha pasado del par
+C 0x4954 0x94 -un hueco- si lo ha clavado
+C 0x4958 y 0xD4 si esta por debajo
+
+# ======================================================================
+# TRAMO 2: MARCADOR, PANEL Y EL TORNEO  (0x4984..0x5009)
+# ======================================================================
+
+C 0x4984 la casilla del hoyo, para el jugador que va delante
+C 0x4985 la ventaja en hoyos
+C 0x498c y en la del otro, un cero
+C 0x4990 0x1E49 son los hoyos 1 al 9 del marcador
+C 0x4996 y del decimo en adelante se usa la otra fila
+C 0x499d 0x1E58, la segunda mitad
+C 0x49a3 recupera quien iba delante
+C 0x49a6 y si era el otro, se cambian las dos casillas
+C 0x49a8 la ventaja
+C 0x49af y un cero para el que va detras
+
+# --- 0x49D8: los numeros de hoyo y el par del marcador -----------------
+C 0x49d8 dieciocho hoyos
+C 0x49db el hoyo, contado desde uno
+C 0x49dd 0xCEC3 se usa aqui de indice temporal
+C 0x49e1 monta el hoyo en el buffer, que es de donde sale el par
+C 0x49e6 la casilla de VRAM de este hoyo
+C 0x49ee el numero de hoyo se escribe desde uno
+C 0x49f2 dos puntos de separacion
+C 0x49f6 y el par del hoyo, en ASCII
+C 0x49fe deja en blanco las dos casillas de golpes
+C 0x4a05 y a por el siguiente
+C 0x4a08 escribe dos puntos y un hueco, y avanza dos columnas
+C 0x4a13 0x3A son los dos puntos
+
+# --- 0x4A3C: escribir numeros en la VRAM ------------------------------
+C 0x4a3c version de 16 bits: si pasa de 255 se escribe 255
+C 0x4a43 empieza por las centenas
+C 0x4a4b version de 8 bits, acotada a dos cifras
+C 0x4a4f 99 es el tope
+C 0x4a53 decenas
+C 0x4a58 y unidades, que siempre se escriben
+C 0x4a5b divide restando, y B cuenta desde el ASCII del cero
+C 0x4a64 si la cifra sale cero...
+C 0x4a68 ...y aun no se ha escrito ninguna...
+C 0x4a6c ...se pone un hueco en vez del cero
+C 0x4a6f D cuenta las cifras ya escritas
+C 0x4a70 y la suelta en la VRAM
+C 0x4a75 la flecha que dice a quien le toca jugar
+C 0x4a7b el jugador que juega
+C 0x4a82 0x2F es la flecha
+C 0x4a88 y un hueco en la linea del otro
+C 0x4a8d el rotulo del hoyo: numero, par y bandera
+C 0x4a90 se enseña desde uno
+C 0x4a97 el par de este hoyo
+C 0x4aa0 0xCECF son los tres bytes de la distancia del hoyo, ya en ASCII
+C 0x4aac el rotulo del viento
+C 0x4aaf y el del desnivel
+C 0x4ab2 escribe el palo elegido
+C 0x4ab5 tres bytes por palo
+C 0x4abb la tabla de los quince
+C 0x4ac0 las dos letras van detras del byte de grupo
+C 0x4ac1 0x1AE7 es donde va el nombre del palo
+C 0x4aca y delante, las cuatro letras de CLUB
+C 0x4ad7 en el nivel AVERAGE el swing es mas lento
+C 0x4ade a partir de EXPERT se usa la mitad del grupo
+C 0x4adf 0x1C es el primer dibujo de la fila de swings
+C 0x4ae7 color 15
+C 0x4aee 0x28 delante del palo
+C 0x4af4 el palo 13 en adelante es el putter
+C 0x4af9 con el putter se dibuja una figura...
+C 0x4afd ...y con los demas, otra
+C 0x4b02 con el putter, ademas, el panel de abajo cambia
+C 0x4b07 se enseñan seis filas en vez de siete
+C 0x4b0a y se borran las dos lineas que sobran
+C 0x4b47 la barra del viento
+C 0x4b4a 0xC625 lleva la fuerza en los tres bits bajos y la direccion arriba
+C 0x4b55 sin viento se dibuja un hueco
+C 0x4b5b 0xD1 deja el sprite fuera de pantalla
+C 0x4b60 dos casillas de la flecha del viento
+C 0x4b6c la fuerza del viento, en su cifra
+C 0x4b77 0x3F cierra el rotulo
+C 0x4b7c dos huecos seguidos
+C 0x4b84 el desnivel del green
+C 0x4b87 se enseña centrado en cero
+C 0x4b8f y la flecha que dice hacia donde cae
+C 0x4b9b escribe la flecha, su cuerpo y su punta
+C 0x4bae la distancia que queda a la bandera
+C 0x4bb1 en el green no se enseña
+C 0x4bb7 se parte en dos sprites, uno por cifra
+C 0x4bc5 0x14 es el separador
+C 0x4be7 borra el rotulo de distancia dejando los sprites fuera de pantalla
+C 0x4bf5 dibuja el mensaje y espera
+C 0x4bf8 0x78 son ciento veinte cuadros, dos segundos
+C 0x4bfd los mensajes son DOS filas de siete
+C 0x4c00 la de arriba, en 0x1A42
+C 0x4c03 y la de abajo, en 0x1A62
+C 0x4c06 siete caracteres por fila
+
+# --- 0x4CC8: azar y torneo --------------------------------------------
+C 0x4cc8 borra siete casillas
+C 0x4cd0 el generador de azar: once vueltas sobre 0xC06F
+C 0x4cd2 once, que es lo que hace falta para que se mezcle bien
+C 0x4cd7 desplaza y realimenta con XOR: un registro de desplazamiento
+C 0x4ce8 la semilla se guarda para la proxima
+C 0x4cee resto de dividir A entre B, restando
+C 0x4cf3 monta el cuadro del torneo: 0xC077 es el orden de salida y 0xC0BE la clasificacion
+C 0x4cf9 treinta y seis participantes
+C 0x4cfb las dos listas se llenan con 0x23..0x00, una al derecho y otra al reves
+C 0x4d03 y se barajan con cincuenta intercambios al azar
+C 0x4d05 dos posiciones sorteadas...
+C 0x4d0c ...y se cambian entre si
+C 0x4d13 0xC114 es el golfista que ha elegido el jugador
+C 0x4d19 se le busca en el orden de salida
+C 0x4d1f y se le pone el primero, dejando 0x24 en su hueco
+C 0x4d29 lo mismo en la clasificacion
+C 0x4d34 todos los resultados a cero
+C 0x4d41 y a cada participante se le sortea un numero de 0 a 7
+C 0x4d46 que sera su dificultad propia para todos los hoyos
+C 0x4d50 el resultado del jugador todavia no cuenta
+C 0x4d53 0xFD son tres hoyos antes del primero
+C 0x4d58 y se simulan tres vueltas en vacio, para que la clasificacion arranque movida
+C 0x4d61 una posicion al azar del cuadro
+C 0x4d65 modulo treinta y cinco
+C 0x4d73 el nombre del participante A: 0x23 es el jugador 1, y esta en 0xC0F6
+C 0x4d79 0x24 es el jugador 2, en 0xC104
+C 0x4d7f y de 0 a 34, los treinta y cinco profesionales
+C 0x4d83 se avanza A nombres
+C 0x4d86 y el final de cada uno es el bit 7 del ultimo caracter
+C 0x4d8f busca al participante A en la clasificacion
+C 0x4d9c sube al participante mientras empate con el de arriba
+C 0x4d9f el de esta posicion
+C 0x4da9 y el de la anterior
+C 0x4db1 si tienen el mismo resultado, comparten puesto
+C 0x4dbe resultado del participante A: 0xC016 con dos bytes por cabeza
+C 0x4dcc en que grupo de nueve sale el participante A
+C 0x4ddd nueve por grupo
+C 0x4de4 y se le suma el hoyo por el que va la vuelta
+C 0x4dec ordena la clasificacion, por burbuja
+C 0x4ded la bandera de "ha habido cambio" vive en el acumulador alterno
+C 0x4dee treinta y cinco parejas
+C 0x4df5 el resultado de uno
+C 0x4dfb y el del siguiente
+C 0x4dff si el de abajo es mejor, hay que cambiarlos
+C 0x4e07 con el mismo resultado desempata quien va mas adelantado
+C 0x4e17 y si tambien empatan, el numero de participante
+C 0x4e1d intercambia los dos
+C 0x4e23 y se apunta que ha habido cambio
+C 0x4e29 mientras haya cambios se vuelve a pasar
+C 0x4e2b la pagina de la clasificacion, desde el primero
+C 0x4e30 dieciocho lineas por pagina
+C 0x4e33 0x3CA3 es la TERCERA tabla de nombres, la de 0x3C00
+C 0x4e41 baja una linea, hasta la 19
+C 0x4e47 y sube una, sin pasarse del primero
+C 0x4e4d escribe una linea de la clasificacion
+C 0x4e4e el puesto, teniendo en cuenta los empates
+C 0x4e56 quien es
+C 0x4e5a los profesionales llevan hueco delante...
+C 0x4e60 ...y los dos jugadores, una flecha
+C 0x4e6c el nombre
+C 0x4e71 catorce caracteres como mucho
+C 0x4e75 el bit 7 no se dibuja: es solo el terminador
+C 0x4e7e y en cuanto aparece, se rellena de espacios
+C 0x4e8f el resultado, con su signo
+C 0x4e9c y los hoyos que lleva jugados
+C 0x4ea1 dieciocho es la vuelta entera
+C 0x4eab con cero jugados se pone un guion
+C 0x4eaf y con la vuelta acabada, una F de final
+C 0x4eba seis columnas hasta la linea siguiente
+C 0x4ebf lee la posicion A de la clasificacion
+C 0x4ec9 juega un hoyo para todos los profesionales
+C 0x4ecc con la vuelta acabada no hay nada que simular
+C 0x4ece el hoyo por el que va la partida
+C 0x4ed4 treinta y seis participantes
+C 0x4ed7 y se recorren en el orden de salida
+C 0x4edf 0x23 y 0x24 son los dos jugadores: esos no se simulan
+C 0x4ee3 el grupo de nueve en que sale
+C 0x4eed el hoyo que le toca a este participante
+C 0x4ef1 y si se pasa de dieciocho, todavia no ha llegado
+C 0x4ef5 tres tablas de probabilidad
+C 0x4ef8 0xC0F5 dice si el jugador va por encima o por debajo del par
+C 0x4efc por debajo: la primera, la mas dura
+C 0x4eff en el par: la segunda
+C 0x4f01 y por encima: la tercera, que no deja hacer eagle
+C 0x4f08 el dado
+C 0x4f0b y la dificultad propia de este golfista
+C 0x4f14 que se le resta
+C 0x4f18 mas su ajuste de la tabla de 0x5130
+C 0x4f1f saturando en 255
+C 0x4f21 su resultado acumulado
+C 0x4f27 y se busca en que tramo cae el dado
+C 0x4f30 el valor del tramo son los golpes sobre el par
+C 0x4f39 que se suman al acumulado
+C 0x4f44 siguiente participante
+C 0x4f4a elegir contra que profesional se juega
+C 0x4f4d el nombre del elegido
+C 0x4f50 catorce caracteres
+C 0x4f52 se copia al hueco del jugador 2
+C 0x4f56 sin el bit del terminador
+C 0x4f65 y el resto, espacios
+C 0x4f6a se escribe en pantalla
+C 0x4f70 0x0D es RETURN: elegido
+C 0x4f76 0x1E y 0x1F son las flechas arriba y abajo
+C 0x4f7e siguiente de la lista
+C 0x4f80 treinta y cinco, y vuelta a empezar
+C 0x4f88 y hacia atras igual
+C 0x4f90 la clasificacion final
+C 0x4f91 busca el primer puesto sin empate
+C 0x4f9f donde ha quedado el jugador 1
+C 0x4fa7 y si hay jugador 2...
+C 0x4fac ...donde ha quedado el
+C 0x4fce 0xC116 se reusa aqui para decir quien ha ganado
+C 0x4fd4 y la vuelta queda cerrada
+
+# ======================================================================
+# TRAMO 3: EL GOLPE  (0x5359..0x5970)
+# ======================================================================
+# La mecanica del golpe son tres barras seguidas, y las tres las mueve el mismo
+# armazon: 0x5603 la arranca, una rutina de paso la sube y la baja, y el
+# disparo la para.
+#
+#   FUERZA   0x561D   sube y baja entre 0 y 0x1C, y se dibuja con casillas
+#   CURVA    0x5682   entre 0 y 0x38, y se dibuja con un sprite
+#   PUNTERIA 0x54AF   la cruceta gira el punto de mira antes de nada
+#
+# La fuerza parada se guarda en (0xC641) y de ahi sale la de verdad, que es
+# (0xC641)*8+0x1F en (0xC61D). Lo que decide si la bola sale recta es la tabla
+# de 0x5495: dos bytes por palo -el limite de abajo y el de arriba- y si la
+# barra de curva se para fuera de esa ventana, la diferencia (acotada a nueve y
+# restada de once) se guarda como gancho (0xC623) o como slice (0xC622).
+
+L 0x533c saca_de_tabla  Devuelve en DE la entrada A de una tabla de punteros que empieza en HL
+C 0x533c dos bytes por entrada
+C 0x5341 y devuelve el puntero en DE
+
+L 0x5359 juega_un_golpe  Un golpe entero: punteria, palo, fuerza, curva y salida de la bola
+C 0x5359 repinta la parte de abajo del panel
+C 0x535c y el palo elegido
+C 0x535f las banderas del vuelo, a cero
+C 0x536c 0xC644 es el punto de mira que se mueve con la cruceta
+C 0x5372 0xC117 dice que el golpe lo repite la maquina
+C 0x5379 dibuja al golfista
+C 0x537c y deja mover la punteria
+C 0x5385 tres cuadros de respiro
+C 0x538a la barra de fuerza
+C 0x538d si se ha cancelado, vuelta a empezar
+C 0x538f la fuerza de verdad es la de la barra por ocho...
+C 0x5395 ...mas 0x1F, que es lo que no se puede quitar
+C 0x539a otros tres cuadros
+C 0x539f con el putter no hay barra de curva
+C 0x53a7 la fuerza no puede quedar negativa
+C 0x53b1 en AVERAGE cada palo tiene su ventana...
+C 0x53ba ...y de EXPERT en adelante, una por cada dos palos
+C 0x53bb dos bytes por entrada
+C 0x53bf la tabla de ventanas
+C 0x53c3 donde se ha parado la barra de curva
+C 0x53c6 por debajo del limite de abajo es gancho
+C 0x53c9 lo que falta
+C 0x53cf y se guarda como gancho
+C 0x53d4 por encima del limite de arriba es slice
+C 0x53da lo que sobra
+C 0x53de y se guarda como slice
+C 0x53e1 0xC006 corta la animacion en la exhibicion
+C 0x53e7 y con la maquina jugando tampoco se anima
+C 0x53eb el swing del golfista
+C 0x53ee guarda de donde sale la bola
+C 0x53fa y a volar
+C 0x53fd nueve es el desvio maximo
+C 0x5403 once menos el desvio: cuanto peor el golpe, menor el numero
+L 0x5408 repite_el_golpe  Repite el golpe que la maquina ya ha decidido, moviendo las barras hasta sus valores
+C 0x5408 mueve la punteria hasta donde ha elegido la maquina
+C 0x540b y la barra de fuerza hasta su valor
+C 0x540e la fuerza, con la misma cuenta
+C 0x5419 el palo que ha elegido
+C 0x541f con el putter no hay barra de curva
+C 0x5424 y si no, se mueve tambien esa
+C 0x542d un segundo de espera
+C 0x5435 lleva la punteria de donde esta a donde quiere la maquina
+C 0x5439 el angulo de ahora
+C 0x543f un paso a la derecha...
+C 0x5444 ...o a la izquierda
+C 0x544b redibuja el punto de mira
+C 0x5453 hasta llegar
+C 0x545c y un segundo mirando
+C 0x5461 mueve la barra de fuerza hasta el valor elegido
+C 0x5464 un paso de la barra
+C 0x546b y para cuando coincide
+C 0x5471 A' cuenta las pasadas que puede dar
+C 0x5477 lo mismo con la barra de curva
+C 0x547a la mitad de las veces se arranca desde uno...
+C 0x547f ...para que la barra no vaya siempre igual
+L 0x54af mueve_la_punteria  La cruceta gira el punto de mira; el disparo lo acepta
+C 0x54af 0xCA34 es el mando que se esta leyendo
+C 0x54b2 el mando 2 se lee de otra manera
+C 0x54b6 dos cuadros
+C 0x54bb el color de la flecha del jugador
+C 0x54be redibuja el punto de mira
+C 0x54c1 disparo: se acepta la punteria
+C 0x54c5 en la exhibicion la maquina mueve la punteria sola
+C 0x54cc y el teclado tambien vale
+C 0x54d6 la cruceta
+C 0x54dd codigo 3: gira a la derecha
+C 0x54e2 codigo 7: gira a la izquierda
+C 0x54e7 elige palo; devuelve carry si no se puede golpear
+C 0x54ed codigo 1: palo mas corto
+C 0x54f7 codigo 5: palo mas largo
+C 0x5500 y no se admite otra pulsacion hasta que suelten
+C 0x5507 el mando 2: la punteria se mueve como un cursor libre
+C 0x550d lee el mando 2 por el PSG
+C 0x5510 la posicion del cursor
+C 0x5515 topes en X: de 0x58 a 0xF7
+C 0x5524 y en Y: de 0 a 0xBF
+C 0x5533 el angulo que resulta
+C 0x5546 el mando 2 tambien mueve la fuerza del putt
+C 0x5550 el eje vertical
+C 0x555d que se suma a 0xC647
+L 0x5570 acota_el_palo  Deja el numero de palo entre 0 y 13 y repinta el rotulo
+C 0x5570 si se ha pasado por debajo...
+C 0x5575 ...se va al ultimo
+C 0x5577 y de catorce en adelante, vuelta al primero
+C 0x557d repinta el rotulo del palo
+L 0x5580 elige_palo  En el green fuerza el putter; en el campo no deja pasar de el
+C 0x5580 0xC011 dice que se juega en el green
+C 0x5589 y alli el palo es siempre el 14, el segundo putter
+C 0x5590 en el campo el putter es el 13
+C 0x5594 y del 14 se vuelve al 13, con carry: no se golpea
+L 0x5597 pinta_el_punto_de_mira  Coloca el sprite de la mira segun el angulo (0xC61F)
+C 0x5597 dieciseis de radio
+C 0x559c el angulo
+C 0x55a0 el coseno da el desplazamiento en X...
+C 0x55a9 ...y el seno el de Y
+C 0x55b0 escribe los cuatro bytes del sprite
+C 0x55be dibujo 12
+C 0x55c3 y color 15
+L 0x55c8 parpadea_la_flecha  Alterna el color de la flecha del jugador que juega
+C 0x55c8 0x1B03 es el atributo del sprite de la flecha
+C 0x55cf color 15 para el jugador 1
+C 0x55d3 y color 9 para el 2
+C 0x55d9 lee el color de ahora
+C 0x55dc si estaba en 2, se pone el suyo...
+C 0x55e1 ...y si no, en 2: asi parpadea
+L 0x55e6 barra_de_fuerza  Sube y baja la barra hasta que el disparo la para
+C 0x55e6 arranca la barra
+C 0x55e9 un paso
+C 0x55ec disparo: parada
+C 0x55f0 fila 7 de la matriz del teclado
+C 0x55f5 y su bit 4 es la tecla STOP
+C 0x55f7 con STOP se cancela el golpe
+C 0x55f9 el segundo disparo tambien cancela
+L 0x5603 arranca_la_barra  Deja la barra en cero, elige su velocidad y cuenta las pasadas
+C 0x5603 de una a cuatro pasadas antes de que se pare sola
+C 0x560a la velocidad sale del nivel
+C 0x5610 en AVERAGE va a uno, en PROFESSIONAL a dos
+C 0x5613 arranca subiendo
+C 0x5619 y desde cero
+L 0x561d paso_de_la_barra_de_fuerza  Un paso de la barra, con su rebote arriba y abajo
+C 0x561d 0xC641 es la barra y 0xC643 el sentido
+C 0x5626 subiendo se suma dos y se resta uno
+C 0x5628 bajando, solo se resta
+C 0x562b si llega por debajo de cero...
+C 0x562e ...se queda en cero y cambia el sentido
+C 0x5634 y a 0x1D...
+C 0x5638 ...se queda en 0x1C y cambia
+C 0x563f un cuadro
+C 0x5642 en AVERAGE, dos: la barra va a la mitad de velocidad
+C 0x5649 cada casilla de la barra son cuatro pasos
+C 0x5651 0x1A68 es el extremo derecho de la barra
+C 0x5656 0x5F es la casilla llena
+C 0x565e y el resto son los cuatro dibujos parciales
+C 0x5665 0x5B es el primero de los cuatro
+C 0x566b y de ahi al principio de la barra, todo a cero
+L 0x5676 barra_de_curva  La segunda barra: el disparo la para
+C 0x5676 arranca la barra
+C 0x5679 un paso
+C 0x567c disparo: parada
+L 0x5682 paso_de_la_barra_de_curva  Un paso de la barra de curva, entre 0 y 0x38
+C 0x5682 el sentido
+C 0x568e subiendo se suma dos veces la velocidad...
+C 0x5690 ...y siempre se resta una
+C 0x5692 por debajo de cero se da la vuelta
+C 0x569d y a 0x38 tambien
+C 0x56ab un cuadro
+C 0x56ae la barra de curva es un sprite
+C 0x56b6 la posicion es 0x44 menos el valor
+C 0x56c0 dibujo 24
+C 0x56c5 y color 11
+L 0x56ca rueda_el_putt  El putt: la bola rueda por el green hasta pararse
+C 0x56ca sin rebote
+C 0x56ce guarda el vector de salida
+C 0x56d1 y la posicion en coma fija arranca centrada
+C 0x56d9 mueve la bola un paso
+C 0x56dc la redibuja
+C 0x56df mira contra el terreno
+C 0x56e2 0xC664 guarda lo mas cerca que ha pasado del hoyo
+C 0x56f1 y desde donde
+C 0x56f7 0xC634 dice que ha chocado con algo
+C 0x56fd y 0xC630 que ya ha rebotado una vez
+C 0x5703 el nivel decide cuanto rebota
+C 0x570d por debajo de 0x3C la bola se para
+C 0x5710 se apunta que ha rebotado
+C 0x5715 y el rebote sale con un angulo sorteado
+C 0x571b siete grados de base
+C 0x571d con signo al azar
+C 0x5728 y la velocidad se parte por la mitad
+C 0x5735 la bandera de choque se limpia
+C 0x5739 si la bola ha entrado, se acabo
+C 0x5741 y por debajo de cinco de velocidad, se para
+L 0x5749 guarda_el_vector  Descompone la velocidad (0xC61E) y el angulo (0xC61F) en sus dos componentes
+C 0x5749 la velocidad
+C 0x574f y el angulo
+C 0x5753 componente X
+C 0x575a y componente Y
+L 0x5761 espera_un_cuadro  Un cuadro, salvo si esta jugando la maquina
+C 0x5761 con la maquina jugando no se espera
+L 0x5769 mueve_la_bola  Dos pasos de la bola por cuadro, con su rozamiento
+C 0x5769 dos pasos por cuadro
+C 0x576b la componente X
+C 0x5771 se suma a la posicion en coma fija
+C 0x5778 y la Y igual
+C 0x5787 0xC631 cuenta los pasos
+C 0x578c y el rozamiento solo se aplica uno de cada dos
+C 0x578e dieciseis de modulo
+C 0x5793 el angulo contrario al de la marcha
+C 0x579b y el desnivel del green, con su direccion
+C 0x57a7 de las dos componentes acumuladas...
+C 0x57b0 ...salen la velocidad nueva...
+C 0x57b8 ...y el angulo nuevo
+L 0x57bf acumula_una_fuerza  Suma a las dos componentes de 0xC616/0xC618 un vector de modulo (0xC620) y angulo A
+C 0x57bf el coseno
+C 0x57c3 por dieciseis
+C 0x57cb que se acumula en X
+C 0x57d0 y el seno igual en Y
+L 0x57e0 seno_por_modulo  El seno del angulo A por (0xC620), con signo
+L 0x57e5 coseno_por_modulo  El coseno del angulo A por (0xC620), con signo
+C 0x57e8 el modulo
+C 0x57f1 y se extiende el signo a HL
+L 0x57f5 extiende_el_signo  Pasa A con signo a DE
+L 0x57fc sale_la_bola  Arranca el vuelo: pone la fisica a cero y saca los datos del palo
+C 0x57fc la posicion en coma fija, a cero
+C 0x5805 0x80 es el medio pixel: la bola arranca centrada en su casilla
+C 0x5813 0xC624 es la cuenta atras del efecto
+C 0x5818 en el campo se recoloca la camara
+C 0x581f de donde sale la bola
+C 0x5828 y las banderas de vuelo a cero
+C 0x5838 0xC639 dice que la bola estaba en el rough
+C 0x583e en el green no hay rough
+C 0x5844 ni cuando se golpea desde el punto de castigo
+C 0x584a 0x26 de dispersion en AVERAGE...
+C 0x584f ...y 0x40 en PROFESSIONAL
+C 0x5856 un numero al azar
+C 0x585d que se convierte en un porcentaje por debajo de cien
+C 0x5863 desde el punto de castigo la perdida es fija
+C 0x5865 y la fuerza se recorta en esa proporcion
+C 0x586e el palo
+C 0x5874 y la tabla de los palos, con cuatro columnas
+C 0x587a la primera es el frenado por cuadro
+C 0x5880 la segunda, el alcance
+C 0x5883 corregido por el nivel
+C 0x5889 la altura arranca a cero
+C 0x588d con el putter el alcance se corrige distinto
+C 0x5898 la velocidad de salida
+C 0x589e 0x78 de modulo para el primer tramo
+C 0x58a3 palo 14: putt en el green
+C 0x58ab palo 13: putt fuera del green
+C 0x58b0 la tercera columna es cuantos cuadros dura la subida
+C 0x58b7 el tramo de subida
+C 0x58b8 dibuja la bola
+C 0x58bb mueve la camara
+C 0x58be y los sprites
+C 0x58c5 si ha entrado, se acabo
+C 0x58ca mira contra el terreno
+C 0x58d3 el tramo de bajada
+C 0x58dc mientras la altura no sea negativa
+C 0x58e1 el frenado
+C 0x58f0 0xC624 cuenta los cuadros que faltan para torcer un grado
+C 0x58f6 con slice se tuerce a un lado...
+C 0x5904 ...y con gancho, al otro
+C 0x5910 el viento: los cuatro bits altos de 0xC625 son su direccion
+C 0x591b tres pasos por unidad de fuerza
+C 0x591e y la fuerza, en los tres bits bajos, por 32
+C 0x5928 el coseno del angulo del viento
+C 0x592e que se acumula en la X de la bola
+C 0x593e y el seno en la Y
+C 0x5956 redibuja
+C 0x5959 si ha entrado, se acabo
+C 0x595e y mira contra el terreno
+
+# ======================================================================
+# TRAMO 4: LOS SPRITES, EL SILBIDO Y EL RIVAL QUE ENSAYA EL GOLPE
+# (0x5968..0x6091)
+# ======================================================================
+# El rival de la maquina no calcula el golpe: LO ENSAYA. 0x5B39 sortea unos
+# valores de partida, y a partir de ahi entra en un bucle -0x5BB4- que juega el
+# golpe entero con la fisica de verdad (0x53A7), mira donde ha caido la bola y,
+# segun el resultado, cambia palo, fuerza, curva o punteria y VUELVE A
+# TIRARLO. Cuando el ensayo le gusta, se queda con esos valores; luego 0x5408
+# los repite delante del jugador moviendo las barras hasta ellos, para que
+# parezca que el rival esta jugando.
+#
+# Los cuatro mandos del ensayo, cada uno con su tope:
+#
+#   0x6048  palo    (0xC667), tope 13
+#   0x6058  angulo  (0xC65F), sin tope
+#   0x6061  fuerza  (0xC665), tope 0x1B
+#   0x6072  curva   (0xC666), tope 0x37
+#
+# y 0x6082 recorta la fuerza en un porcentaje en vez de en una cantidad.
+
+L 0x5968 cuenta_un_paso  Suma uno a los pasos que lleva la bola en este golpe
+L 0x5970 rueda_por_el_campo  El putt fuera del green: la bola rueda con la cuenta de pasos del palo
+C 0x5970 la altura, a cero: esto no vuela
+C 0x5976 los pasos que da el putt
+C 0x597b uno mas
+C 0x597e mueve la camara
+C 0x5981 y redibuja los sprites
+C 0x5985 si ha entrado o se ha ido fuera, se acabo
+C 0x598d mira contra el terreno
+C 0x5991 0xC63A dice que la bola esta en el aire por un desnivel
+C 0x5997 y entonces el paso no cuenta
+C 0x59a1 al parar, si no estaba en el agua...
+C 0x59a6 ...suena la pista 1
+L 0x59aa pinta_los_sprites  Monta los tres sprites -bola, sombra y bandera- y los vuelca a 0x1B00
+C 0x59aa 0xC600 son los doce bytes de los atributos de sprite
+C 0x59b0 el jugador 1 usa 0xC600 y el 2, 0xC604
+C 0x59ba la fila de la bola
+C 0x59bd dos arriba, que es donde cae el dibujo
+C 0x59c0 y la sombra va a la altura de la bola por debajo
+C 0x59c5 sin altura no hay sombra...
+C 0x59c9 ...y 0xD1 la deja fuera de pantalla
+C 0x59cc por debajo de la fila 0xC0 la bola se ha salido
+C 0x59d4 la columna
+C 0x59dc por la izquierda de 0x58 tambien se sale
+C 0x59e1 y por la derecha de 0xF8
+C 0x59e6 por encima de ocho de altura la bola se dibuja mas gorda
+C 0x59f9 color 15 para el jugador 1
+C 0x59fe y color 9 para el 2
+C 0x5a06 en el green los sprites son otros
+C 0x5a0c recoloca la camara
+C 0x5a0f 0xC63A a uno es la bola cayendo por un talud
+C 0x5a15 a dos, tapada
+C 0x5a18 y entonces la sombra sube cinco
+C 0x5a21 o desaparece
+C 0x5a26 por debajo de doce de altura la bola puede tapar el decorado
+C 0x5a2d se mira que hay bajo ella
+C 0x5a3f y tambien un poco mas alla
+C 0x5a50 si la bola esta tapada, se esconden los dos sprites
+C 0x5a62 los doce bytes de golpe a 0x1B00
+C 0x5a6b con la maquina ensayando no se dibuja nada
+C 0x5a72 en el campo ya esta
+C 0x5a77 en el green se mira la casilla de debajo
+C 0x5a7f 0x79 es el hoyo
+C 0x5a84 la distancia de la bola al hoyo
+C 0x5a91 en las dos componentes
+C 0x5a95 a menos de dos pixeles en las dos...
+C 0x5a9c ...la bola toca el hoyo
+L 0x5aa2 la_bola_ha_entrado  Levanta la bandera de hoyo hecho y calla el PSG
+L 0x5aaa esconde_la_bola  Deja el sprite del jugador que juega fuera de pantalla
+L 0x5aba esconde_los_sprites  Deja los doce bytes de sprite fuera de pantalla
+L 0x5ac9 mueve_la_camara  Suma a la posicion de la camara el vector de velocidad
+C 0x5ac9 el angulo
+C 0x5acd la componente X
+C 0x5ad3 que se acumula
+C 0x5adb y la Y igual
+L 0x5ae9 media_velocidad  Si la bola esta en el agua, el paso vale la mitad
+C 0x5aea 0xC627 se pone cuando la bola cae al agua
+C 0x5aef y entonces el paso se parte por la mitad
+L 0x5af4 silba_la_bola  La altura de la bola se oye: el tono del canal A sale de ella
+C 0x5af4 la altura acumulada
+C 0x5af7 mas lo que sube este cuadro
+C 0x5aff con la maquina ensayando no suena nada
+C 0x5b05 por debajo de cero no hay tono
+C 0x5b0f la altura, escalada
+C 0x5b15 y restada de 0x200: cuanto mas alta la bola, mas agudo
+C 0x5b1e registro 0 del PSG
+C 0x5b22 y registro 1
+L 0x5b28 corrige_por_la_fuerza  Escala un byte de la tabla de palos por la fuerza del golpe
+C 0x5b29 la fuerza del golpe
+C 0x5b2f el valor por la fuerza, en tanto por 256
+C 0x5b32 y nunca cero
+L 0x5b39 el_rival_prepara_el_golpe  Sortea unos valores de partida y ENSAYA el golpe entero hasta que le sale bien
+C 0x5b39 de donde sale la bola
+C 0x5b3f los contadores de intentos, a cero
+C 0x5b52 la fuerza de partida, entre 0x18 y 0x1B
+C 0x5b5c y la curva, entre 0x19 y 0x20
+C 0x5b6a el angulo hacia la bandera
+C 0x5b71 y la distancia que hay
+C 0x5b7c 0xC662 es la distancia al objetivo
+C 0x5b7f por encima de 128 hay que buscar un punto intermedio
+C 0x5b84 elige palo por la distancia
+C 0x5b87 0x6C de margen
+C 0x5b8e la distancia, dividida por ocho
+C 0x5b93 y acotada al palo 13
+C 0x5b9c mira que terreno hay debajo
+C 0x5b9f desde el agua se sube un palo
+C 0x5ba8 guarda la posicion de la camara para poder repetir
+L 0x5bb4 el_rival_ensaya  Juega el golpe con la fisica de verdad y mira como ha quedado
+C 0x5bb4 un cuadro
+C 0x5bb7 si el angulo se ha ido muy lejos del bueno...
+C 0x5bc6 ...se vuelve a centrar
+C 0x5bcc la camara vuelve al sitio
+C 0x5bd8 el angulo del ensayo
+C 0x5bde 0xC118 avisa de que esto es un ensayo: ni mando, ni espera, ni dibujo
+C 0x5be3 la curva
+C 0x5be9 la fuerza, con la misma cuenta de siempre
+C 0x5bf4 y el palo
+C 0x5bfa los resultados del ensayo anterior, a cero
+C 0x5c16 y se juega el golpe entero
+C 0x5c19 un intento mas
+C 0x5c20 donde ha acabado la bola
+C 0x5c2b y a que distancia del objetivo
+C 0x5c31 la camara, otra vez a su sitio
+C 0x5c3d si ha entrado, ya esta
+C 0x5c44 y si ha llegado al green, tambien
+C 0x5c49 0xC652 son los pasos que se ha pasado
+C 0x5c51 0xC66B, que ha chocado con un arbol
+C 0x5c58 0xC66A, que se ha quedado corta
+C 0x5c5f fuera de limites
+C 0x5c66 o en bunker
+C 0x5c6d o demasiado cerca de un obstaculo
+C 0x5c74 en el agua
+C 0x5c7b y a partir de siete intentos se conforma
+C 0x5c81 de diez a trece de margen
+C 0x5c8c si ha quedado mas cerca que eso, vale
+C 0x5c90 desde el rough...
+C 0x5c98 ...se mira cuanto le falta
+C 0x5c9e y se recorta la fuerza
+C 0x5ca4 se ha pasado: un palo menos
+C 0x5cab con poca fuerza no se puede bajar mas
+C 0x5cb0 y si se puede, un punto menos de fuerza
+L 0x5cb4 el_rival_cae_al_agua  Ha caido al agua en el ensayo: cambia palo, fuerza o angulo casi al azar
+C 0x5cb4 con el putter la salida es otra
+C 0x5cbc a partir de diez cambios de angulo se rinde
+C 0x5cc2 y de doce intentos, tambien
+C 0x5cc8 un dado
+C 0x5ccb un dado bajo: se replantea entero
+C 0x5cd3 cada tramo del dado toca una cosa distinta
+C 0x5ce7 sube el angulo entre cuatro y once...
+C 0x5cf1 ...y la curva un poco
+C 0x5cfb o baja el angulo cinco...
+C 0x5d00 ...y la curva
+C 0x5d0a un palo mas
+C 0x5d0f o uno menos
+C 0x5d17 uno o dos puntos de fuerza
+C 0x5d1f o de tres a seis
+C 0x5d2b con el putter en el agua se pasa al palo 12
+C 0x5d30 y si la fuerza era mucha, se parte por la mitad
+C 0x5d41 se ha quedado corta: un palo menos y un punto mas de fuerza
+C 0x5d47 el palo 12 es el ultimo antes del putter
+C 0x5d53 con poca fuerza se deja como esta
+C 0x5d5b y con mucha se baja un punto
+C 0x5d67 o se cambia al putter con dos puntos mas
+L 0x5d74 el_rival_choca_con_un_arbol  Si el golpe ha sido corto, prueba con el putter
+C 0x5d74 con menos de doce pasos el golpe era corto
+C 0x5d88 palo 12 y fuerza 0x1A
+L 0x5d95 el_rival_mete_la_bola  El ensayo ha entrado: se rebaja para no meterla siempre
+C 0x5d95 se apunta que ya ha probado
+C 0x5d9a y se borra la bandera, que esto era solo un ensayo
+C 0x5d9e un punto menos de fuerza
+C 0x5daa y si ademas se habia pasado, otro y un palo menos
+C 0x5db4 fuera de limites o en bunker: baja un palo
+C 0x5dbe un dado
+C 0x5dc6 si se ha pasado en X...
+C 0x5dce ...o en Y
+C 0x5dd6 replanteo entero: fuerza 0x1B, palo 0 y curva sorteada
+C 0x5dfa se ha quedado corto
+C 0x5e00 muy corto: se replantea
+C 0x5e04 casi bien: se da por bueno
+C 0x5e09 y a partir de veinte retoques del angulo...
+C 0x5e10 ...un palo mas y un punto menos de fuerza
+C 0x5e22 otro dado, con cuatro salidas
+C 0x5e36 abanica el angulo un poco mas
+C 0x5e40 sube un palo y un punto de fuerza...
+C 0x5e53 ...o baja un palo y un punto
+C 0x5e5e y una vez si y otra no, mueve el angulo dos grados
+C 0x5e76 se ha pasado de largo: recorta la fuerza en proporcion
+C 0x5e81 y si aun asi no baja, palo abajo y fuerza abajo
+C 0x5e95 desviado en X
+C 0x5eb2 desviado en Y
+C 0x5ecb demasiado cerca de un obstaculo
+C 0x5ece a partir de once intentos se conforma
+L 0x5ee4 distancia_al_hoyo  Distancia de la bola a la bandera del green
+L 0x5eef distancia_entre  Distancia entre el punto HL y el punto DE, con las dos componentes en valor absoluto
+C 0x5eef la diferencia en X
+C 0x5ef6 y la de Y
+C 0x5efd el cuadrado de una
+C 0x5f00 mas el de la otra
+C 0x5f01 y la raiz
+L 0x5f04 abanica_el_tiro  Va probando angulos y curvas alternos a un lado y a otro
+C 0x5f04 0xC66F cuenta los retoques
+C 0x5f09 un lado si y otro no
+C 0x5f0d cuatro grados por retoque
+C 0x5f14 y el impar va al otro lado
+L 0x5f28 abanica_el_angulo  Como el anterior, pero solo el angulo
+C 0x5f41 si el angulo se ha ido mas de 64 grados del bueno...
+C 0x5f4c ...sube dos palos
+C 0x5f52 y si no puede, se pone el 12
+L 0x5f58 busca_un_punto_intermedio  Con la bandera demasiado lejos, busca a que sitio tirar de paso
+C 0x5f58 0xCEC4 es la fila de la bandera
+C 0x5f5f si el objetivo ya no es la bandera, no hay nada que buscar
+C 0x5f6a solo se busca una vez
+C 0x5f6e tres barridos como mucho
+C 0x5f73 un radio sorteado entre 0x53 y 0x62
+C 0x5f7d desde el angulo a la bandera
+C 0x5f83 se prueba ese punto
+C 0x5f89 si vale, ese es el objetivo
+C 0x5f97 y si no, un grado a la izquierda
+C 0x5f99 hasta 96 grados
+C 0x5fa3 y luego lo mismo hacia la derecha
+C 0x5fb8 otros 96
+C 0x5fbc y si no sale, otro radio
+L 0x5fc9 sirve_este_punto  Mira si el punto a distancia (0xC65E) y angulo B+C cae en terreno bueno
+C 0x5fc9 el radio
+C 0x5fd3 el coseno
+C 0x5fd8 sumado a la X de la bola
+C 0x5fe7 si se sale del campo, no vale
+C 0x5ff3 el seno
+C 0x600e la casilla del campo que hay ahi
+C 0x6015 0x78 es la bandera: esa siempre vale
+C 0x6018 por debajo de 0x7A no vale
+C 0x601b de 0x7A a 0x93 es calle
+C 0x601f de 0x94 a 0xD8 no vale
+C 0x6022 y de 0xD9 a 0xE8, tampoco
+L 0x602a por_ciento_de_los_pasos  Que parte de los pasos del golpe representa HL, en tanto por 256
+C 0x602a con cero no hay nada que dividir
+C 0x602e los pasos que ha dado el golpe
+C 0x6038 division por restas
+L 0x6042 un_palo_menos  Baja un palo del ensayo
+L 0x6046 un_palo_mas  Sube un palo del ensayo
+L 0x6048 mueve_el_palo  Suma A al palo del ensayo, sin pasar de 13
+C 0x604e el putter es el tope
+C 0x6051 y si se pasa, no se cambia
+L 0x6058 mueve_el_angulo  Suma A al angulo del ensayo
+L 0x6061 mueve_la_fuerza  Suma A a la fuerza del ensayo, sin pasar de 0x1B
+C 0x6066 uno menos, que la cuenta va desde uno
+C 0x6068 0x1B es el tope
+L 0x6072 mueve_la_curva  Suma A a la curva del ensayo, sin pasar de 0x37
+C 0x6078 0x37 es el tope
+L 0x6082 recorta_la_fuerza  Deja la fuerza del ensayo en el tanto por 256 que diga A
+C 0x6086 por debajo de seis no se toca
+C 0x6089 y si no, se escala
+
+# ======================================================================
+# EL HOYO: UN GUION QUE SE INTERPRETA, Y LA BANDERA SORTEADA
+# ======================================================================
+# 0x6F49 monta el hoyo. El guion no es un mapa: es una tira de opcodes que se
+# van soltando en 0xCB00 (o en 0xCCE0 si lo que se monta es el green).
+#
+#   0x21          fin del guion
+#   0x3n 0x4n 0x5n   repite n+1 veces uno de los TRES bytes de cabecera
+#   cualquier otro   una casilla, tal cual
+#
+# Y la cabecera del hoyo ES su paleta: los tres bytes van a 0xCEC0, y el nibble
+# alto del opcode indexa desde 0xCEBD, tres bytes antes. Asi el 3, el 4 y el 5
+# caen justo encima de ella. Es el mismo formato del Hole in One de 1984, byte
+# a byte, y por eso el interprete de aquel lee estos treinta y seis guiones.
+#
+# Tres casillas marcan sitio: 0xE9 es la bandera y 0xD9, 0xDD y 0xE3 son los
+# tres tees, que ademas DICEN EL PAR (3, 4 y 5). Detras del 0x21 van tres
+# digitos ASCII con la longitud en metros.
+#
+# LA BANDERA NO ESTA EN EL GUION. El guion trae el green; donde se clava la
+# bandera se sortea entre NUEVE sitios (0x7005, un dado modulo nueve), y las
+# coordenadas salen de la tabla de 0x70F2, que es una rejilla de tres por tres
+# distinta para cada par.
+D 0x716b 0x718f campo_queen_side  Los dieciocho punteros del campo QUEEN SIDE, par 72 y 6.166 metros
+F 0x716b w4
+D 0x718f 0x71b3 campo_king_side  Los dieciocho punteros del campo KING SIDE, par 72 y 6.290 metros
+F 0x718f w4
+D 0x71b3 0x9d6c guiones_de_los_hoyos  Los treinta y seis guiones, uno detras de otro y sin un byte suelto: 0x71B3 es el hoyo 1 de QUEEN SIDE y 0x9C1F el 18 de KING SIDE
+D 0x9d6c 0x9ddd guion_del_green  El guion del GREEN, el mismo para los treinta y seis hoyos: 0x6F4F lo elige cuando (0xC011) dice que se juega la vista corta, y se monta en 0xCCE0 en vez de en 0xCB00
+D 0x70f2 0x7128 sitios_de_la_bandera  Nueve posiciones de bandera por cada par (3, 4 y 5): primero las nueve X y detras las nueve Y, dieciocho bytes por par
+F 0x70f2 9
+D 0x7128 0x713a sitios_en_el_green  Los mismos nueve sitios en las coordenadas del green: nueve X y nueve Y
+F 0x7128 9
+
+L 0x6f49 monta_el_hoyo  Interpreta el guion del hoyo -o el del green- y lo suelta en el buffer de RAM
+C 0x6f49 0xC011 dice si se juega la vista del green
+C 0x6f4f y entonces el guion es siempre el mismo
+C 0x6f54 si no, el hoyo por el que va la vuelta
+C 0x6f57 sobre la tabla del campo elegido
+C 0x6f63 los tres bytes de cabecera, que son la paleta del hoyo
+C 0x6f69 el hoyo se monta en 0xCB00
+C 0x6f72 y el green en 0xCCE0
+C 0x6f75 un opcode
+C 0x6f78 0x21 cierra el guion
+C 0x6f7c por debajo de 0x30 es una casilla tal cual
+C 0x6f80 y de 0x60 para arriba, tambien
+C 0x6f84 el nibble bajo, mas uno, es la cuenta
+C 0x6f88 y el alto dice cual de los tres materiales
+C 0x6f93 0xCEBD son tres bytes antes de la cabecera: por eso el 3, el 4 y el 5 caen encima de ella
+C 0x6f9c y se repite la cuenta
+C 0x6fa4 casilla literal
+C 0x6fa5 0xE9 es la bandera...
+C 0x6fa9 ...y se apunta donde ha caido
+C 0x6fad 0xD9 es el tee de par 3
+C 0x6fb5 0xDD el de par 4
+C 0x6fbd y 0xE3 el de par 5
+C 0x6fc3 o sea que el tee DICE el par
+C 0x6fc6 y tambien se apunta donde esta
+C 0x6fce con el green ya esta
+C 0x6fd6 detras del 0x21 van los tres digitos de la longitud
+C 0x6fdc en el editor no se sortea nada
+C 0x6fe1 donde ha quedado la bandera
+C 0x6fe4 pasado a pixeles
+C 0x6ff2 y lo mismo con el tee
+C 0x6ffd en el editor la bandera va siempre al sitio 4, el del centro
+C 0x7005 y en partida se sortea entre nueve
+C 0x700d dieciocho bytes por par...
+C 0x7013 ...y el par sale del tee
+C 0x701e mas el sitio sorteado
+C 0x7020 la tabla de los nueve sitios
+C 0x7027 la X de la bandera
+C 0x702e nueve mas alla estan las Y
+C 0x7035 y la misma cuenta para las coordenadas del green
+C 0x7043 la fila del green
+C 0x7052 la casilla del hoyo dentro del green
+C 0x705b centrada en su casilla
+C 0x7067 en el editor no hay ni viento ni desnivel
+C 0x706c el viento se sortea entero
+C 0x7073 y en AVERAGE se le quita el bit 6, o sea que sopla menos
+C 0x707b la direccion del desnivel del green
+C 0x7083 y su fuerza, que crece con el nivel
+C 0x7093 con un minimo de cuatro
+L 0x7099 lee_del_guion  Un byte del guion; en el editor se lee de la VRAM en vez de la ROM
+C 0x7099 0xC006 dice que se esta en el editor
+C 0x709f y alli el guion lo lleva la propia pantalla
+L 0x70a2 lee_tres_del_guion  Los tres bytes de cabecera, o los tres digitos de la longitud
+L 0x70ad busca_bandera_y_tee  Recorre el buffer ya montado y apunta donde estan la bandera y el tee
+C 0x70ad las 480 casillas del hoyo
+C 0x70b4 0xE9 es la bandera
+C 0x70bb 0xD9, 0xDD y 0xE3 son los tres tees
+L 0x70d3 casilla_a_pixeles  Pasa una direccion del buffer a coordenadas de pantalla
+C 0x70d3 el buffer empieza en 0xCB00
+C 0x70d9 y la rejilla es de veinte de ancho
+C 0x70de la division, restando
+C 0x70e5 la fila, por ocho
+C 0x70ea la columna, mas veinte y por ocho
+C 0x70ef y 0x58 de margen por la izquierda, que es donde acaba el panel
+L 0x713a vuelca_el_green  Vuelca el buffer del green a la VRAM
+L 0x713f vuelca_el_hoyo  Vuelca las 480 casillas del buffer a la VRAM, veinte columnas por veinticuatro filas
+C 0x7142 0x180B es la columna once: las diez primeras son el panel
+C 0x7145 veinticuatro filas
+C 0x7147 de veinte casillas
+C 0x7152 y doce columnas hasta la fila siguiente
+C 0x715a en el campo ya esta
+C 0x715f en el green, ademas, se pinta el hoyo
+C 0x7166 0xD6 es su dibujo
+
+# ======================================================================
+# EL SONIDO: DOCE PISTAS DE PSG
+# ======================================================================
+# 0x6B2D elige pista por indice y 0x6B83 es el interprete, que corre una vez
+# por interrupcion. Las reglas, leidas del codigo:
+#
+#   bit 7 o 6 puestos  NOTA: (n & 0x3F) * 2 indexa la tabla de tonos de 0x6C0D
+#                      y se escriben DOS registros de PSG seguidos
+#   bit 5 a cero       ESPERA: el byte son los cuadros que hay que aguantar
+#   0x2D               guarda la forma de envolvente para el final
+#   0x33               SALTO: los dos bytes siguientes son la direccion
+#   0x3D               PARADA: silencia el mezclador
+#   0x3E               pone a cero los registros 0 a 5
+#   el resto           escritura suelta de un registro, con su valor detras
+#
+# Los limites de las doce pistas no estan escritos: se han sacado siguiendolas
+# byte a byte con ese mismo interprete (tools/pistas.py). Encajan una detras de
+# otra sin un hueco, y la nota mas alta que usan las doce es la 43, que es
+# justo donde acaba la tabla de tonos.
+#
+# CINCO PISTAS COMPARTEN COLA. La 5 desemboca en la 6, la 6 en la 0, la 0 en la
+# 1 y la 1 en la 7, y las cinco acaban en la MISMA parada de 0x6D7A. Y la 11,
+# la mas larga, acaba en un SALTO a si misma: es la unica que da vueltas.
+#
+# Nota de metodo: esta lectura reproduce el interprete del cartucho, pero NO
+# esta contrastada con el emulador. Los limites son medidos; que suene lo que
+# aqui se dice, no se afirma.
+D 0x6b55 0x6b6d tabla_de_pistas  Doce punteros de 16 bits: donde empieza cada pista de PSG
+F 0x6b55 w4
+D 0x6c0d 0x6c65 tabla_de_tonos  Cuarenta y cuatro notas (indices 0 a 43), pareja de registros fino y grueso por nota
+F 0x6c0d w4
+D 0x6c65 0x6c66 tono_sobrante  Un byte que ninguna de las doce pistas alcanza: la nota mas alta que usan es la 43
+F 0x6c65 1
+D 0x6c66 0x6cd7 pista_2  Pista 2, la del menu y la vuelta; para con un 0x3D en 0x6CD6
+D 0x6cd7 0x6cd8 pista_sobrante  Un byte de relleno entre la pista 2 y la 4
+F 0x6cd7 1
+D 0x6cd8 0x6ce8 pista_4  Pista 4, la mas corta: la de meter la bola
+D 0x6ce8 0x6d1a pista_3  Pista 3, la del hoyo en uno y el albatros
+D 0x6d1a 0x6d3c pista_5  Pista 5; sigue en la 6
+D 0x6d3c 0x6d48 pista_6  Pista 6; sigue en la 0
+D 0x6d48 0x6d50 pista_0  Pista 0; sigue en la 1
+D 0x6d50 0x6d5a pista_1  Pista 1, la de la bola parada; sigue en la 7
+D 0x6d5a 0x6d7b pista_7  Pista 7, la del bogey; aqui acaban las cinco que comparten cola
+D 0x6d7b 0x6d97 pista_8  Pista 8, la del eagle
+D 0x6d97 0x6dbc pista_9  Pista 9, la del birdie
+D 0x6dbc 0x6ddf pista_10  Pista 10, la del par
+D 0x6ddf 0x6f49 pista_11  Pista 11, la mas larga (362 bytes) y la unica que da vueltas: acaba en un salto a si misma
+
+# ======================================================================
+# LO QUE SE DECOMPRIME A LA VRAM
+# ======================================================================
+# Hay DOS descompresores, y se distinguen por el byte de escape:
+#
+#   0x6AFA  escape 0xA0..0xAF: (n & 0x0F) + 2 copias del byte siguiente
+#   0x6ABD  escape 0x00..0x0F: (n & 0x0F) + 1 vueltas de un PAR de bytes que se
+#           alternan. Es la de las tablas de color de SCREEN 2, donde los bytes
+#           van a pares.
+#
+# Los dos paran cuando el destino llega al tope, no cuando se acaba la entrada,
+# asi que los limites de estos bloques se han sacado descomprimiendolos de
+# verdad (tools/descomprime.py). Encajan uno detras de otro sin un byte suelto,
+# desde 0x9F85 hasta 0xAEA3.
+#
+# Y HAY TRES TABLAS DE NOMBRES EN LA VRAM, no una: 0x1800, 0x1C00 y 0x3C00. El
+# cartucho cambia de pantalla entera escribiendo el registro 2 del VDP (0x678B
+# lo hace con un XOR 1 y 0x67CC con un XOR 9), de modo que el marcador y la
+# clasificacion del torneo estan dibujados a la vez que el campo, cada uno en
+# su tabla.
+D 0x6898 0x69b3 sprites_comprimidos  Los sprites, comprimidos por rachas: 736 bytes que van a 0x3800-0x3AE0
+D 0x69b3 0x6a4f texto_del_panel  El panel de la izquierda: 24 filas de 10 caracteres a 0x1801, con TOP, 1UP, 2UP, SHOTS, HOLE, PAR, POWER, CURVE y CLUB. 0x6A28 es donde empieza su fila 17, y 0x680C redibuja desde ahi las seis o siete de abajo
+D 0x9f21 0x9f28 tabla_del_swing  Siete desplazamientos de un byte: donde empieza cada dibujo del swing, contados desde su propia casilla
+F 0x9f21 7
+D 0x9f28 0x9f85 dibujos_del_swing  Los siete dibujos del golfista, de cuatro por cinco casillas. Cada fila empieza por una mascara de cuatro bits: un bit a uno es hueco y uno a cero se lleva la casilla siguiente de la tira
+D 0x9f85 0xa5e6 patrones_comprimidos  La tabla de patrones entera, 2.048 bytes a 0x0000; 0x66D4 la suelta en los tres tercios de la pantalla
+D 0xa5e6 0xa7d2 colores_comprimidos  La tabla de color, 2.048 bytes a 0x2000, comprimida a pares
+D 0xa7d2 0xa90c patrones_del_green  Los patrones de la vista del green: 0x9DF3 los suelta en 0x1168-0x1300
+D 0xa90c 0xaa0e colores_del_green  Y sus colores, en 0x3168-0x3300
+D 0xaa0e 0xaafd patrones_del_texto  Los 360 bytes de patrones que llevan la fuente: 0x670A los repone en 0x0698 de cada tercio sin tocar el resto
+D 0xaafd 0xaba1 colores_del_texto  Y sus colores, en 0x2698 de cada tercio
+D 0xaba1 0xacfb pantalla_de_juego  La tabla de nombres de 0x1800: el panel y el campo
+D 0xacfb 0xae44 pantalla_del_marcador  La tabla de nombres de 0x1C00: el marcador de dieciocho hoyos
+D 0xae44 0xae90 pantalla_del_torneo  Los cinco primeros renglones de la tabla de nombres de 0x3C00, la de la clasificacion
+D 0xae90 0xae9b renglon_del_torneo  Un solo renglon de 32 casillas, que 0x674E repite dieciocho veces para las dieciocho lineas de la clasificacion
+D 0xae9b 0xaea3 ultimo_renglon_del_torneo  El renglon de abajo del todo de la clasificacion
+
+# ======================================================================
+# TABLAS SUELTAS
+# ======================================================================
+D 0x4842 0x4848 escala_del_green  Dos bytes por par (3, 4 y 5): la escala con la que 0x47DF pasa el punto de mira de las coordenadas del campo a las del green
+F 0x4842 2
+D 0x5495 0x54af ventana_del_palo  Trece parejas -limite de abajo y de arriba- de la barra de curva, una por palo. Solo llega hasta el palo 12: los dos putters no tienen entrada
+F 0x5495 2
+D 0x63e9 0x63f1 mascaras_de_bit  Las ocho mascaras de un bit, para sacar el pixel que toca de un patron de la VRAM
+F 0x63e9 8
+D 0x6437 0x6444 frenado_del_palo  Trece bytes, uno por palo: cuanto pierde la bola de velocidad en cada cuadro de la bajada
+F 0x6437 13
+D 0x6444 0x6451 subida_del_palo  Trece bytes: cuantos cuadros dura el tramo de subida de cada palo
+F 0x6444 13
+D 0x6451 0x645e alcance_del_palo  Trece bytes: el alcance de cada palo, que 0x5B28 escala luego por la fuerza del golpe
+F 0x6451 13
+D 0x645e 0x646d salida_del_palo  QUINCE bytes -aqui si estan los dos putters, 0x1E y 0x7F-: la velocidad con la que sale la bola
+F 0x645e 15
+D 0x65a2 0x65c2 rachas_de_la_curva  Treinta y dos cuentas de racha que 0x657D expande a 0xC500: el arcotangente, comprimido por longitud de racha
+F 0x65a2 16
+D 0x65c2 0x6603 tabla_del_seno  Sesenta y cinco pasos de un cuarto de onda, de 0x00 a 0xFF, que 0x658C refleja hasta llenar 0xC3C0-0xC4C0
+F 0x65c2 16
+D 0x9ec0 0x9ed3 guion_del_swing_lento  Pares (dibujo, cuadros) terminados en 0xFF: el swing entero, nueve tiempos
+F 0x9ec0 2
+D 0x9ed3 0x9ee4 guion_del_swing_medio  Ocho tiempos
+F 0x9ed3 2
+D 0x9ee4 0x9eef guion_del_swing_corto  Cinco tiempos
+F 0x9ee4 2
+D 0x9eef 0x9ef4 guion_del_putt  Dos tiempos: el golpe del putter
+F 0x9eef 2
+D 0xafad 0xafc1 tabla_de_estados  Diez punteros: el despachador de 0xAFAC y 0xAFCE salta por aqui. 0xAFB3 y 0xAFB7 son desplazamientos DENTRO de esta misma tabla, o sea sub-menus del editor
+F 0xafad w4
+D 0xafc1 0xafc5 cuatro_de_0xafc1  Los cuatro bytes que 0xAF5D pasa a 0xB4F0
+F 0xafc1 4
+
+# ======================================================================
+# EL EDITOR DE CAMPOS: LOS BLOQUES DE DATOS
+# ======================================================================
+# El modo GAME >>CONSTRUCTION del menu no es un juego: es el EDITOR de campos,
+# y ocupa desde 0xAEA3 hasta el final del cartucho. Su antepasado es el fichero
+# CONST de la cinta *Hole In One Extension Course* (HAL, 1985), con el que este
+# cartucho comparte 3.050 bytes en 24 tiras, y de donde salen tal cual los
+# mismos rotulos: SETCHR, SAVE, LOAD, COPY, SWAP, CLEAR.
+#
+# Los rotulos se escriben con 0xBC23, que tiene su propio formato: DOS bytes
+# con la direccion de VRAM y detras el texto, cerrado con un 0x40 -o sea que la
+# arroba no se puede escribir-.
+D 0xbc3d 0xbc45 rotulo_hoyo  "HOLE:" en 0x1802
+D 0xbc45 0xbc4e rotulo_setchr  "SETCHR" en 0x1843: elegir con que casilla se pinta
+D 0xbc4e 0xbc54 rotulo_par  "PAR" en 0x1863
+D 0xbc54 0xbc5c rotulo_distancia  "DIST>" en 0x1883
+D 0xbc5c 0xbc63 rotulo_shot  "SHOT" en 0x18C3: probar el hoyo golpeando
+D 0xbc63 0xbc6a rotulo_move  "MOVE" en 0x18E3
+D 0xbc6a 0xbc71 rotulo_viento  "WIND" en 0x1963
+D 0xbc71 0xbc7d marco_arriba  La fila de arriba del recuadro del panel, en 0x1801
+D 0xbc7d 0xbc89 marco_hoyo  La linea "HOLE" del recuadro, en 0x1821
+D 0xbc89 0xbc95 marco_interrogante  La linea del interrogante, en 0x1841
+D 0xbc95 0xbca1 marco_par  La linea "PAR" del recuadro, en 0x1861
+D 0xbca1 0xbcad marco_abajo  La fila de abajo del recuadro, en 0x1881
+D 0xbcad 0xbcb4 rotulo_save  "SAVE" en 0x18C3
+D 0xbcb4 0xbcbb rotulo_load  "LOAD" en 0x18E3
+D 0xbcbb 0xbcc2 rotulo_copy  "COPY" en 0x1903
+D 0xbcc2 0xbcc9 rotulo_swap  "SWAP" en 0x1923
+D 0xbcc9 0xbcd1 rotulo_clear  "CLEAR" en 0x1943
+D 0xbcd1 0xbd59 casillas_del_editor  Las 136 casillas con las que se puede pintar, en el orden en que salen al elegir: 0xB528 las enseña y 0xB8A9 saca de aqui la que toca
+F 0xbcd1 16
+D 0xbd59 0xbd5f tee_de_par_3  El sello del tee de par 3: seis casillas, tres por dos, empezando por 0xD9
+F 0xbd59 3
+D 0xbd5f 0xbd65 tee_de_par_4  El sello del tee de par 4, que empieza por 0xDD
+F 0xbd5f 3
+D 0xbd65 0xbd6b tee_de_par_5  El sello del tee de par 5, que empieza por 0xE3
+F 0xbd65 3
+D 0xbd6b 0xbd73 green_1  Sello de green: ocho casillas, cuatro por dos, con la bandera 0xE9 dentro
+F 0xbd6b 4
+D 0xbd73 0xbd7b green_2  El segundo green
+F 0xbd73 4
+D 0xbd7b 0xbd83 green_3  El tercero
+F 0xbd7b 4
+D 0xbd83 0xbd8b green_4  El cuarto
+F 0xbd83 4
+D 0xbd8b 0xbd93 green_5  El quinto
+F 0xbd8b 4
+D 0xbd93 0xbda3 tabla_de_sellos  Ocho punteros: los tres tees y los cinco greens
+F 0xbd93 w4
+D 0xbda3 0xbdaa rotulo_par_dos_puntos  "PAR:" en 0x1923
+D 0xbdaa 0xbdae rotulo_interrogante  El interrogante en 0x19E7
+D 0xbdae 0xbdb4 rotulo_1st  "1ST" en 0x1965
+D 0xbdb4 0xbdba rotulo_2nd  "2ND" en 0x1985
+D 0xbdba 0xbdc0 rotulo_3rd  "3RD" en 0x19A5
+D 0xbdc0 0xbdc8 rotulo_nombre  "NAME:" en 0x1A42, al grabar
+D 0xbdc8 0xbdd0 rotulo_green  "GREEN" en 0x1A62
+D 0xbdd0 0xbdd9 rotulo_o_tee  "OR TEE" en 0x1A83
+D 0xbdd9 0xbddf rotulo_no  "NOT" en 0x1AA2
+D 0xbddf 0xbde8 rotulo_encontrado  "FOUND>" en 0x1AC3: el aviso de que al hoyo le falta green o tee
+D 0xbde8 0xbdf1 rotulo_seguro_2  "SURE>>" en 0x1A62
+D 0xb09e 0xb0a7 rotulo_seguro  "SURE>>" en 0x18C2, la pregunta antes de borrar
+D 0xb603 0xb60b rotulo_error  "ERROR" en 0x1A83
+D 0xb2a4 0xb2ac tabla_del_setchr  Cuatro punteros del submenu de elegir casilla, que 0xB29B pasa al mismo despachador de 0xAFC5
+F 0xb2a4 w4
+D 0xb46c 0xb46f casilla_en_blanco  Los tres caracteres de una casilla de marcador vacia: dos espacios y un cero
+F 0xb46c 3
+D 0xb501 0xb50f sprites_a_esconder_1  Los planos de sprite que hay que apartar en la pantalla principal del editor, cerrados con un cero
+F 0xb501 14
+D 0xb50f 0xb51b sprites_a_esconder_2  Los de la pantalla de dibujar
+F 0xb50f 12
+D 0xb51b 0xb528 sprites_a_esconder_3  Los de la pantalla de grabar
+F 0xb51b 13
+D 0xb7a3 0xb7af sprites_del_cursor  Tres atributos de sprite de cuatro bytes: fila, columna, dibujo y color del cursor del editor
+F 0xb7a3 4
+D 0xba81 0xba91 dibujos_del_cursor  Cuatro grupos de cuatro: los dibujos y colores con los que parpadea el cursor
+F 0xba81 4
+D 0xbe6c 0xbe7c texto_pulsa_una_tecla  "Push any Key !!", terminado en cero, que 0xBE63 escribe por CHPUT: es texto de BASIC, no del juego
+D 0xbef0 0xbf14 buffers_de_los_hoyos  Dieciocho punteros a RAM, de 0xD04B en adelante y de 480 en 480: donde el editor guarda las 480 casillas de cada hoyo
+F 0xbef0 w4
+D 0xbff2 0xc000 cola_del_cartucho  Tres bytes y once de relleno a 0xFF: el final de los 32 KB
+F 0xbff2 16
+
+# ======================================================================
+# EL FICHERO DE CAMPO QUE GRABA EL EDITOR ES EL DE 1984
+# ======================================================================
+# 0xBF14 monta en RAM el fichero que se va a grabar, y lo que le pone delante
+# son estos veintiun bytes:
+#
+#     push af / push hl
+#     ld hl,0c066h / ld (0e000h),hl
+#     ld hl,0c08ah / ld (0e002h),hl
+#     ld a,001h    / ld (0e004h),a
+#     pop hl / pop af / ret
+#
+# Ese trozo NO es de este cartucho: es exactamente el que llevan delante los
+# ficheros SDATA, WDATA y NDATA de la cinta *Hole In One Extension Course* de
+# 1985, y lo que hace es apuntar 0xE000 y 0xE002 -las dos tablas del Hole in
+# One de 1984- al campo que se acaba de cargar.
+#
+# Y las cuentas cuadran. En el fichero de la cinta el trozo esta en 0xC050 y
+# las dos tablas en 0xC066 y 0xC08A, o sea a 0x16 y a 0x3A bytes del principio.
+# Aqui el trozo se copia a 0xCF81, la tabla de los dieciocho hoyos se llena en
+# 0xCF97 y la segunda en 0xCFBB: 0x16 y 0x3A. El mismo fichero, byte a byte.
+#
+# O sea que un campo hecho con el editor de este cartucho de 1986 se carga en
+# el Hole in One de 1984 con `BLOAD"CAS:",R` y `CALL GOLF`.
+D 0xbf78 0xbf8e cabecera_del_fichero  Los veintiun bytes que van delante del campo grabado: apuntan 0xE000 y 0xE002 a las tablas del fichero. Es el mismo trozo que llevan los campos de la cinta de 1985
+F 0xbf78 8
