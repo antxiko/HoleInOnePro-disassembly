@@ -98,10 +98,10 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 <p>which is exactly what the code says it builds:</p>
 <table><tr><th>register</th><th>value</th><th>what</th></tr><tr><td>R2</td><td>06</td><td>name table at 0x1800</td></tr><tr><td>R3</td><td>FF</td><td>colour table at 0x2000</td></tr><tr><td>R4</td><td>03</td><td>pattern table at 0x0000</td></tr><tr><td>R5</td><td>36</td><td>sprite attributes at 0x1B00</td></tr><tr><td>R6</td><td>07</td><td>sprite patterns at 0x3800</td></tr></table>
 <h2 id="the-result">The result</h2>
-<table><tr><th>area</th><th>different</th><th>of</th></tr><tr><td>patterns, third 0</td><td>0</td><td>2,048</td></tr><tr><td>patterns, third 1</td><td>0</td><td>2,048</td></tr><tr><td>patterns, third 2</td><td>0</td><td>2,048</td></tr><tr><td>colour, third 0</td><td>0</td><td>2,048</td></tr><tr><td>colour, third 1</td><td>0</td><td>2,048</td></tr><tr><td>colour, third 2</td><td>0</td><td>2,048</td></tr><tr><td>sprite patterns</td><td>0</td><td>736</td></tr><tr><td>name table at 0x3C00</td><td>0</td><td>768</td></tr><tr><td><b>total</b></td><td><b>0</b></td><td><b>13,792</b></td></tr></table>
-<p>Zero differences across everything that comes out of a table.</p>
-<h2 id="the-thirty-bytes-that-do-differ">The thirty bytes that do differ</h2>
-<p>In the left-hand panel there are 30 bytes different out of 264, and they are exactly the ones the game writes as it plays:</p>
+<table><tr><th>area</th><th>different</th><th>of</th></tr><tr><td>patterns, third 0</td><td>0</td><td>2,048</td></tr><tr><td>patterns, third 1</td><td>0</td><td>2,048</td></tr><tr><td>patterns, third 2</td><td>0</td><td>2,048</td></tr><tr><td>colour, third 0</td><td>0</td><td>2,048</td></tr><tr><td>colour, third 1</td><td>0</td><td>2,048</td></tr><tr><td>colour, third 2</td><td>0</td><td>2,048</td></tr><tr><td>sprite patterns</td><td>0</td><td>736</td></tr><tr><td>name table at 0x3C00 (leaderboard)</td><td>0</td><td>768</td></tr><tr><td>name table at 0x1C00 (scorecard)</td><td>0</td><td>768</td></tr><tr><td>name table at 0x1800 (panel and hole 1)</td><td>0</td><td>624</td></tr><tr><td><b>total</b></td><td><b>0</b></td><td><b>15,184</b></td></tr></table>
+<p>Zero differences. And the last row is the one that says the most: the <b>whole</b> playing screen — the panel, the twenty columns of QUEEN SIDE&#x27;s hole 1 map and both edge columns — comes out the same as on the machine.</p>
+<h2 id="the-seventeen-cells-that-do-differ">The seventeen cells that do differ</h2>
+<p>They are all in columns 3 to 8, which is where the game writes figures as it plays:</p>
 <pre><code>what this repo builds       what is in the emulator
 *TOP    +!                  *TOP ;18+!        -&gt; TOP +18
 *1UP    +!                  *1UP  &lt;0+!        -&gt; 1UP ±0
@@ -109,7 +109,7 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 *HOLE   +!                  *HOLE  1+!        -&gt; HOLE 1
 *     ? +!                  * 352 ? +!        -&gt; 352 m
 * PAR   +#                  * PAR 4 +#        -&gt; PAR 4</code></pre>
-<p>That is: the factory TOP, both players&#x27; shot counts, the hole number, the distance, the par, the wind and the slope. None of them is in a table, which is why they are not compared.</p>
+<p>That is: the factory TOP, both players&#x27; shot counts, the hole number, the distance, the par, the wind and the slope. None of them comes out of a table — the code writes them from the state of the round — which is why those six columns are left out of the comparison.</p>
 <p>And they double as another check: the <b>352 metres</b> and the <b>par 4</b> the emulator shows are the ones <code>tools/campos.py</code> gets out of the script for hole 1 of QUEEN SIDE, reading the par off the tee tile and the metres off the three ASCII digits that close the script.</p>
 <h2 id="what-was-not-measured-in-the-emulator">What was NOT measured in the emulator</h2>
 <ul><li><b>The sound.</b> The twelve tracks are followed byte by byte with the cartridge&#x27;s own interpreter and their boundaries are measured, but nobody has listened to them against what the real PSG does.</li><li><b>The editor.</b> Its labels, stamps and file format come out of the code; no course has been saved and loaded back.</li><li><b>The opponent.</b> That it rehearses the shot is read off the code, not timed.</li></ul>

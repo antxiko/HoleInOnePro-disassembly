@@ -6244,7 +6244,7 @@ L_6FCE:
 	and a			;6fdf
 	ret nz			;6fe0
 L_6FE1:
-	ld hl,(0cec6h)		;6fe1   ; donde ha quedado la bandera
+	ld hl,(0cec6h)		;6fe1   ; donde ha quedado la bandera, que SI viene en el guion
 	call casilla_a_pixeles		;6fe4   ; pasado a pixeles
 	add a,007h		;6fe7
 	ld (0cec5h),a		;6fe9
@@ -6256,18 +6256,18 @@ L_6FE1:
 	ld l,a			;6ff8
 	ld h,c			;6ff9
 	ld (0cecah),hl		;6ffa
-	ld a,(0c006h)		;6ffd   ; en el editor la bandera va siempre al sitio 4, el del centro
+	ld a,(0c006h)		;6ffd   ; en el editor no se sortea: siempre el sitio 4, el del centro
 	and a			;7000
 	ld a,004h		;7001
 	jr nz,L_700D		;7003
-	call tira_del_azar		;7005   ; y en partida se sortea entre nueve
+	call tira_del_azar		;7005   ; y en partida se sortea uno de nueve
 	ld b,009h		;7008
 	call resto_de_dividir		;700a
 L_700D:
-	ld (0cecch),a		;700d   ; dieciocho bytes por par...
+	ld (0cecch),a		;700d   ; el sitio sorteado, que vale para el tee y para el green
 	ld e,a			;7010
 	ld d,000h		;7011
-	ld a,(0c06ch)		;7013   ; ...y el par sale del tee
+	ld a,(0c06ch)		;7013   ; dieciocho bytes por par, y el par sale del tee
 	sub 003h		;7016
 	ld c,a			;7018
 	add a,a			;7019
@@ -6277,17 +6277,17 @@ L_700D:
 	add a,a			;701d
 	add a,e			;701e   ; mas el sitio sorteado
 	ld e,a			;701f
-	ld hl,070f2h		;7020   ; la tabla de los nueve sitios
+	ld hl,070f2h		;7020   ; la tabla de los nueve sitios del tee
 	add hl,de			;7023
 	ld a,(0cecah)		;7024
-	add a,(hl)			;7027   ; la X de la bandera
+	add a,(hl)			;7027   ; mas el desplazamiento: ahi se pone la bola
 	ld (0c63fh),a		;7028
 	ld a,(0cecbh)		;702b
 	ld e,009h		;702e   ; nueve mas alla estan las Y
 	add hl,de			;7030
 	add a,(hl)			;7031
 	ld (0c640h),a		;7032
-	ld de,07128h		;7035   ; y la misma cuenta para las coordenadas del green
+	ld de,07128h		;7035   ; y el mismo sitio, en la rejilla del green
 	ld a,(0cecch)		;7038
 	ld l,a			;703b
 	ld h,000h		;703c
@@ -6295,7 +6295,7 @@ L_700D:
 	ld e,(hl)			;703f
 	push hl			;7040
 	pop ix		;7041
-	ld a,(ix+009h)		;7043   ; la fila del green
+	ld a,(ix+009h)		;7043   ; la fila del hoyo dentro del green
 	ld b,a			;7046
 	add a,a			;7047
 	add a,a			;7048
@@ -6306,13 +6306,13 @@ L_700D:
 	add hl,hl			;704e
 	ld d,000h		;704f
 	add hl,de			;7051
-	ld (0cecdh),hl		;7052   ; la casilla del hoyo dentro del green
+	ld (0cecdh),hl		;7052   ; la casilla del hoyo dentro del green, que 0x715F pinta con 0xD6
 	ld a,e			;7055
 	add a,a			;7056
 	add a,a			;7057
 	add a,a			;7058
 	add a,003h		;7059
-	ld (0c63dh),a		;705b   ; centrada en su casilla
+	ld (0c63dh),a		;705b   ; y el hoyo en pixeles, centrado en su casilla
 	ld a,b			;705e
 	add a,a			;705f
 	add a,a			;7060
@@ -6411,10 +6411,11 @@ L_70DE:
 	ret			;70f1
 
 ; ----------------------------------------------------------------------
-; DATOS sitios_de_la_bandera: Nueve posiciones de bandera por cada par (3, 4 y
-;   5): primero las nueve X y detras las nueve Y, dieciocho bytes por par
+; DATOS sitios_en_el_tee: Nueve sitios de la BOLA dentro de la caja del tee,
+;   por cada par (3, 4 y 5): primero las nueve X y detras las nueve Y,
+;   dieciocho bytes por par. Son desplazamientos en pixeles, de 3 a 17
 ;   0x70f2..0x7128  (54 bytes)
-DATA_sitios_de_la_bandera:
+DATA_sitios_en_el_tee:
 	defb 005h,00bh,011h,005h,00bh,011h,005h,00bh,011h	; 70f2  .........
 	defb 003h,003h,003h,007h,007h,007h,00bh,00bh,00bh	; 70fb  .........
 	defb 006h,00bh,010h,006h,00bh,010h,006h,00bh,010h	; 7104  .........
@@ -6423,10 +6424,10 @@ DATA_sitios_de_la_bandera:
 	defb 004h,004h,004h,007h,007h,007h,00ah,00ah,00ah	; 711f  .........
 
 ; ----------------------------------------------------------------------
-; DATOS sitios_en_el_green: Los mismos nueve sitios en las coordenadas del
-;   green: nueve X y nueve Y
+; DATOS sitios_del_hoyo_en_el_green: Los mismos nueve sitios, aqui en casillas
+;   del green: donde cae el hoyo. Nueve X y nueve Y
 ;   0x7128..0x713a  (18 bytes)
-DATA_sitios_en_el_green:
+DATA_sitios_del_hoyo_en_el_green:
 	defb 010h,014h,018h,010h,014h,018h,010h,014h,018h	; 7128  .........
 	defb 007h,007h,007h,00bh,00bh,00bh,00fh,00fh,00fh	; 7131  .........
 

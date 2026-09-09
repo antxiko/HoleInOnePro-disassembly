@@ -7,7 +7,7 @@ autocontenida, con las imagenes embebidas como data URI.
 Las imagenes NO son ilustraciones: las dibuja tools/graficos.py a partir de los
 propios bytes de la ROM, ejecutando en Python los mismos descompresores, el
 mismo interprete de texto y el mismo interprete de guiones de hoyo que corre el
-Z80. Y estan comprobadas contra la VRAM de openMSX: 13.792 bytes de patrones,
+Z80. Y estan comprobadas contra la VRAM de openMSX: 15.184 bytes de patrones,
 color, sprites y tablas de nombres, sin una sola diferencia. Ninguna se ha
 retocado.
 
@@ -35,7 +35,7 @@ PAR = 72
 METROS_Q = 6166
 METROS_K = 6290
 GOLFISTAS = 35
-VRAM = 13792
+VRAM = 15184
 
 
 def mil(n, idioma):
@@ -52,8 +52,8 @@ TXT = {
               "ROM</b>, ejecutando en Python los mismos descompresores y los "
               "mismos int&eacute;rpretes que corre el Z80. Y no valen por "
               "&laquo;verse bien&raquo;: la VRAM montada as&iacute; se compara "
-              "byte a byte contra la de openMSX y coinciden <b>13.792 de "
-              "13.792</b>. El listado y las cifras salen del binario y se "
+              "byte a byte contra la de openMSX y coinciden <b>15.184 de "
+              "15.184</b>. El listado y las cifras salen del binario y se "
               "reproducen con <code>make</code>.",
         claim="Dos campos de dieciocho hoyos, un editor para hacerte el tuyo y "
               "treinta y cinco profesionales de verdad contra los que jugar, "
@@ -99,7 +99,7 @@ TXT = {
               "decompressors and the same interpreters the Z80 runs. And they "
               "do not count because they &ldquo;look right&rdquo;: the VRAM "
               "built this way is compared byte for byte against openMSX's and "
-              "<b>13,792 of 13,792</b> match. The listing and the numbers come "
+              "<b>15,184 of 15,184</b> match. The listing and the numbers come "
               "from the binary and are reproducible with <code>make</code>.",
         claim="Two eighteen-hole courses, an editor to build your own and "
               "thirty-five real tour professionals to play against, in 32 KB. "
@@ -226,16 +226,24 @@ HALLAZGOS = {
          "<p>Es el mismo formato, byte a byte, que el <i>Hole in One</i> de "
          "1984. El int&eacute;rprete de aquel cartucho lee estos treinta y "
          "seis gui&oacute;nes enteros.</p>"),
-        ("La bandera no est&aacute; en el gui&oacute;n del hoyo",
-         "<p>El gui&oacute;n trae el green, pero no d&oacute;nde se clava la "
-         "bandera. Eso se <b>sortea en cada partida</b>: 0x7005 tira un dado "
-         "m&oacute;dulo nueve y la tabla de 0x70F2 da las coordenadas, en una "
-         "rejilla de tres por tres que es distinta para cada par &mdash;m"
-         "&aacute;s cerrada en los pares 3 que en los 4 y 5&mdash;.</p>"
-         "<p>Lo mismo con el viento y con el desnivel del green: los tres se "
-         "sortean al montar el hoyo, y el nivel elegido en el men&uacute; "
-         "decide cu&aacute;nto. En AVERAGE, 0x7073 le quita al viento el bit 6, "
-         "o sea que sopla la mitad.</p>"),
+        ("Una sola tirada decide el tee y la bandera del green",
+         "<p>0x7005 tira un dado m&oacute;dulo nueve, y con ese n&uacute;mero "
+         "decide <b>dos cosas a la vez</b>. Con la tabla de 0x70F2 coloca "
+         "<b>la bola dentro de la caja del tee</b>: 0x7024 suma la entrada a "
+         "las coordenadas del tee y el resultado va a 0xC63F, que es la bola "
+         "en la vista del campo. Los desplazamientos van de 3 a 17 p&iacute;"
+         "xeles, que es justo lo que mide la caja del tee &mdash;tres casillas "
+         "por dos&mdash;, y la rejilla es distinta para cada par.</p>"
+         "<p>Y con la tabla de 0x7128, el <b>mismo n&uacute;mero</b> coloca "
+         "<b>el hoyo dentro del green</b>: 0x7043 monta con &eacute;l la "
+         "casilla donde 0x715F escribe el tile 0xD6. As&iacute; que de "
+         "d&oacute;nde sales y d&oacute;nde est&aacute; la bandera cuando "
+         "llegas son la misma tirada.</p>"
+         "<p>La bandera de la vista larga, en cambio, <b>s&iacute;</b> viene "
+         "en el gui&oacute;n: es el tile 0xE9, y 0x6FA5 apunta d&oacute;nde "
+         "cae. Lo que se sortea, adem&aacute;s del tee, son el viento y el "
+         "desnivel del green, y el nivel decide cu&aacute;nto: en AVERAGE "
+         "0x7073 le quita al viento el bit 6, o sea que sopla la mitad.</p>"),
         ("El fichero que graba el editor es el del cartucho de 1984",
          "<p>El modo <code>GAME &gt;&gt;CONSTRUCTION</code> no es un juego: es "
          "un <b>editor de campos</b> completo, con SETCHR para elegir con "
@@ -351,16 +359,23 @@ HALLAZGOS = {
          "<p>It is the same format, byte for byte, as the 1984 <i>Hole in "
          "One</i>. That cartridge's interpreter reads all thirty-six of these "
          "scripts whole.</p>"),
-        ("The flag is not in the hole's script",
-         "<p>The script carries the green, but not where the flag is planted. "
-         "That is <b>rolled every round</b>: 0x7005 throws a die modulo nine "
-         "and the table at 0x70F2 gives the coordinates, on a three-by-three "
-         "grid that differs per par &mdash; tighter on the par 3s than on the "
-         "4s and 5s.</p>"
-         "<p>Same for the wind and the green's slope: all three are rolled "
-         "when the hole is built, and the level chosen in the menu decides how "
-         "much. On AVERAGE, 0x7073 clears bit 6 of the wind, so it blows half "
-         "as hard.</p>"),
+        ("One roll of the die sets both the tee spot and the pin",
+         "<p>0x7005 throws a die modulo nine, and that one number decides "
+         "<b>two things at once</b>. Through the table at 0x70F2 it places "
+         "<b>the ball inside the tee box</b>: 0x7024 adds the entry to the "
+         "tee's coordinates and the result goes to 0xC63F, the ball in the "
+         "course view. The offsets run from 3 to 17 pixels, which is exactly "
+         "what the tee box measures &mdash; three tiles by two &mdash; and the "
+         "grid differs per par.</p>"
+         "<p>And through the table at 0x7128, the <b>same number</b> places "
+         "<b>the hole inside the green</b>: 0x7043 builds from it the cell "
+         "where 0x715F writes tile 0xD6. So where you tee off from and where "
+         "the pin is when you get there are the same roll.</p>"
+         "<p>The flag in the long view, by contrast, <b>is</b> in the script: "
+         "it is tile 0xE9, and 0x6FA5 notes where it lands. What is rolled, "
+         "besides the tee spot, are the wind and the green's slope, and the "
+         "level decides how much: on AVERAGE 0x7073 clears bit 6 of the wind, "
+         "so it blows half as hard.</p>"),
         ("The file the editor saves is the 1984 cartridge's",
          "<p><code>GAME &gt;&gt;CONSTRUCTION</code> is not a game mode: it is "
          "a full <b>course editor</b>, with SETCHR to pick which tile you "
@@ -435,12 +450,15 @@ GALERIA = [
     ("hoyo_1_queen.png",
      "<b>El hoyo 1 de QUEEN SIDE</b>, par 4 y 352 metros, con el panel a la "
      "izquierda tal como lo escribe 0x67EF y el mapa entrando por la columna "
-     "once. La calle sube entre &aacute;rboles con el mar a la derecha; abajo "
-     "est&aacute; el tee, con los coches aparcados",
+     "once. Es la pantalla que se coteja contra el emulador: la tabla de "
+     "nombres <b>entera</b>, 624 casillas de 768, con <b>cero diferencias</b> "
+     "&mdash;las 144 que se dejan fuera son las seis columnas donde el juego "
+     "escribe cifras vivas&mdash;",
      "<b>Hole 1 of QUEEN SIDE</b>, par 4 and 352 metres, with the panel on the "
      "left exactly as 0x67EF writes it and the map starting at column eleven. "
-     "The fairway climbs between trees with the sea to the right; the tee is "
-     "at the bottom, with the buggies parked"),
+     "This is the screen that is compared against the emulator: the <b>whole</b> "
+     "name table, 624 of 768 cells, with <b>zero differences</b> &mdash; the "
+     "144 left out are the six columns where the game writes live figures"),
     ("campo_queen.png",
      "<b>QUEEN SIDE entero</b>: los dieciocho hoyos, par 72 y 6.166 metros, "
      "dibujados uno a uno con el mismo int&eacute;rprete de gui&oacute;nes que "

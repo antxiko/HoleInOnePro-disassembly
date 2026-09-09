@@ -94,15 +94,24 @@ en el par o por encima. Contra un jugador que va bien, el circuito aprieta.
 Con un jugador solo en TOURNAMENT, 0x4F4A te deja además **elegir contra qué
 profesional juegas**, pasando la lista con las flechas.
 
-## La bandera no está en el guion
+## Una sola tirada decide el tee y la bandera del green
 
-El guion trae el green, pero no dónde se clava la bandera. Eso se sortea en cada
-partida: 0x7005 tira un dado módulo nueve y la tabla de 0x70F2 da las
-coordenadas, en una rejilla de tres por tres distinta para cada par —más cerrada
-en los pares 3 que en los 4 y 5—.
+0x7005 tira un dado módulo nueve, y con ese número decide **dos cosas a la vez**.
 
-Lo mismo con el viento y con el desnivel del green: los tres se sortean al montar
-el hoyo, y el nivel decide cuánto.
+Con la tabla de **0x70F2** coloca **la bola dentro de la caja del tee**: 0x7024
+suma la entrada a (0xCECA), que son las coordenadas del tee en píxeles, y el
+resultado va a 0xC63F y 0xC640, que es la bola en la vista del campo. Los
+desplazamientos van de 3 a 17 píxeles, justo lo que mide la caja del tee —tres
+casillas por dos—, y la rejilla es distinta para cada par.
+
+Y con la tabla de **0x7128**, el **mismo número** coloca **el hoyo dentro del
+green**: 0x7043 monta con él la casilla de 0xCECD, que es donde 0x715F escribe el
+tile 0xD6, y las coordenadas del hoyo en 0xC63D y 0xC63E. Así que de dónde sales
+y dónde está la bandera cuando llegas son la misma tirada.
+
+La bandera de la vista larga, en cambio, **sí** viene en el guion: es el tile
+0xE9, y 0x6FA5 apunta dónde cae. Lo que se sortea, además del tee, son el viento
+y el desnivel del green, y el nivel decide cuánto.
 
 ## La cabecera del hoyo es su paleta
 

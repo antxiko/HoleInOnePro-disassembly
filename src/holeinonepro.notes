@@ -1271,19 +1271,31 @@ C 0x6089 y si no, se escala
 # tres tees, que ademas DICEN EL PAR (3, 4 y 5). Detras del 0x21 van tres
 # digitos ASCII con la longitud en metros.
 #
-# LA BANDERA NO ESTA EN EL GUION. El guion trae el green; donde se clava la
-# bandera se sortea entre NUEVE sitios (0x7005, un dado modulo nueve), y las
-# coordenadas salen de la tabla de 0x70F2, que es una rejilla de tres por tres
-# distinta para cada par.
+# LO QUE SE SORTEA NO ES LA BANDERA. La bandera SI esta en el guion: es el
+# tile 0xE9, y 0x6FA5 apunta donde cae. Lo que 0x7005 sortea con un dado modulo
+# nueve es OTRA cosa, y con el mismo numero decide dos:
+#
+#   0x70F2  donde se pone LA BOLA dentro del tee. 0x7024 suma la entrada de la
+#           tabla a (0xCECA), que son las coordenadas del tee en pixeles, y el
+#           resultado va a 0xC63F y 0xC640, que es la bola en la vista del
+#           campo. Los desplazamientos van de 3 a 17 pixeles, o sea que caben
+#           dentro de la caja del tee, que son tres casillas por dos.
+#   0x7128  donde cae EL HOYO dentro del green. 0x7043 monta con ellas la
+#           casilla de 0xCECD, que es donde 0x715F escribe el tile 0xD6, y las
+#           coordenadas del hoyo en 0xC63D y 0xC63E.
+#
+# O sea que una sola tirada decide de que sitio del tee se sale y en que punto
+# del green esta la bandera cuando se llega, y las dos rejillas son de tres por
+# tres. La de 0x70F2, ademas, es distinta para cada par.
 D 0x716b 0x718f campo_queen_side  Los dieciocho punteros del campo QUEEN SIDE, par 72 y 6.166 metros
 F 0x716b w4
 D 0x718f 0x71b3 campo_king_side  Los dieciocho punteros del campo KING SIDE, par 72 y 6.290 metros
 F 0x718f w4
 D 0x71b3 0x9d6c guiones_de_los_hoyos  Los treinta y seis guiones, uno detras de otro y sin un byte suelto: 0x71B3 es el hoyo 1 de QUEEN SIDE y 0x9C1F el 18 de KING SIDE
 D 0x9d6c 0x9ddd guion_del_green  El guion del GREEN, el mismo para los treinta y seis hoyos: 0x6F4F lo elige cuando (0xC011) dice que se juega la vista corta, y se monta en 0xCCE0 en vez de en 0xCB00
-D 0x70f2 0x7128 sitios_de_la_bandera  Nueve posiciones de bandera por cada par (3, 4 y 5): primero las nueve X y detras las nueve Y, dieciocho bytes por par
+D 0x70f2 0x7128 sitios_en_el_tee  Nueve sitios de la BOLA dentro de la caja del tee, por cada par (3, 4 y 5): primero las nueve X y detras las nueve Y, dieciocho bytes por par. Son desplazamientos en pixeles, de 3 a 17
 F 0x70f2 9
-D 0x7128 0x713a sitios_en_el_green  Los mismos nueve sitios en las coordenadas del green: nueve X y nueve Y
+D 0x7128 0x713a sitios_del_hoyo_en_el_green  Los mismos nueve sitios, aqui en casillas del green: donde cae el hoyo. Nueve X y nueve Y
 F 0x7128 9
 
 L 0x6f49 monta_el_hoyo  Interpreta el guion del hoyo -o el del green- y lo suelta en el buffer de RAM
@@ -1313,21 +1325,21 @@ C 0x6fc6 y tambien se apunta donde esta
 C 0x6fce con el green ya esta
 C 0x6fd6 detras del 0x21 van los tres digitos de la longitud
 C 0x6fdc en el editor no se sortea nada
-C 0x6fe1 donde ha quedado la bandera
+C 0x6fe1 donde ha quedado la bandera, que SI viene en el guion
 C 0x6fe4 pasado a pixeles
 C 0x6ff2 y lo mismo con el tee
-C 0x6ffd en el editor la bandera va siempre al sitio 4, el del centro
-C 0x7005 y en partida se sortea entre nueve
-C 0x700d dieciocho bytes por par...
-C 0x7013 ...y el par sale del tee
+C 0x6ffd en el editor no se sortea: siempre el sitio 4, el del centro
+C 0x7005 y en partida se sortea uno de nueve
+C 0x700d el sitio sorteado, que vale para el tee y para el green
+C 0x7013 dieciocho bytes por par, y el par sale del tee
 C 0x701e mas el sitio sorteado
-C 0x7020 la tabla de los nueve sitios
-C 0x7027 la X de la bandera
+C 0x7020 la tabla de los nueve sitios del tee
+C 0x7027 mas el desplazamiento: ahi se pone la bola
 C 0x702e nueve mas alla estan las Y
-C 0x7035 y la misma cuenta para las coordenadas del green
-C 0x7043 la fila del green
-C 0x7052 la casilla del hoyo dentro del green
-C 0x705b centrada en su casilla
+C 0x7035 y el mismo sitio, en la rejilla del green
+C 0x7043 la fila del hoyo dentro del green
+C 0x7052 la casilla del hoyo dentro del green, que 0x715F pinta con 0xD6
+C 0x705b y el hoyo en pixeles, centrado en su casilla
 C 0x7067 en el editor no hay ni viento ni desnivel
 C 0x706c el viento se sortea entero
 C 0x7073 y en AVERAGE se le quita el bit 6, o sea que sopla menos

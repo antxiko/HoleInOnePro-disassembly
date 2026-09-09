@@ -112,5 +112,5 @@ tests/                     lo que se afirma, atado al binario</code></pre>
 <p>Es la comprobación que decide si las imágenes valen. Se saca el volcado de openMSX:</p>
 <pre><code>openmsx -machine C-BIOS_MSX1_EU -cart holeinonepro.rom \
         -script tools/omsx_vram.tcl</code></pre>
-<p>y luego <code>make vram</code> compara byte a byte la VRAM que monta <code>tools/graficos.py</code> con la de verdad. Salen <b>13.792 de 13.792</b> iguales en patrones, color, sprites y tablas de nombres. Los 30 bytes que bailan son las cifras que el juego escribe en marcha: el TOP, los golpes, el número de hoyo, la distancia, el par, el viento y el desnivel.</p>
+<p>y luego <code>make vram</code> compara byte a byte la VRAM que monta <code>tools/graficos.py</code> con la de verdad. Salen <b>15.184 de 15.184</b> iguales en patrones, color, sprites y las TRES tablas de nombres. Las 17 casillas que bailan son las cifras que el juego escribe en marcha: el TOP, los golpes, el número de hoyo, la distancia, el par, el viento y el desnivel.</p>
 <footer><p><em>Hole in One Professional</em> lo publico HAL Laboratory para MSX en 1986, en un cartucho de 32 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion, y la imagen del cartucho no se distribuye.</p></footer></div>

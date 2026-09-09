@@ -48,15 +48,19 @@ which is exactly what the code says it builds:
 | colour, third 1 | 0 | 2,048 |
 | colour, third 2 | 0 | 2,048 |
 | sprite patterns | 0 | 736 |
-| name table at 0x3C00 | 0 | 768 |
-| **total** | **0** | **13,792** |
+| name table at 0x3C00 (leaderboard) | 0 | 768 |
+| name table at 0x1C00 (scorecard) | 0 | 768 |
+| name table at 0x1800 (panel and hole 1) | 0 | 624 |
+| **total** | **0** | **15,184** |
 
-Zero differences across everything that comes out of a table.
+Zero differences. And the last row is the one that says the most: the **whole**
+playing screen — the panel, the twenty columns of QUEEN SIDE's hole 1 map and
+both edge columns — comes out the same as on the machine.
 
-## The thirty bytes that do differ
+## The seventeen cells that do differ
 
-In the left-hand panel there are 30 bytes different out of 264, and they are
-exactly the ones the game writes as it plays:
+They are all in columns 3 to 8, which is where the game writes figures as it
+plays:
 
     what this repo builds       what is in the emulator
     *TOP    +!                  *TOP ;18+!        -> TOP +18
@@ -67,8 +71,9 @@ exactly the ones the game writes as it plays:
     * PAR   +#                  * PAR 4 +#        -> PAR 4
 
 That is: the factory TOP, both players' shot counts, the hole number, the
-distance, the par, the wind and the slope. None of them is in a table, which is
-why they are not compared.
+distance, the par, the wind and the slope. None of them comes out of a table —
+the code writes them from the state of the round — which is why those six columns
+are left out of the comparison.
 
 And they double as another check: the **352 metres** and the **par 4** the
 emulator shows are the ones `tools/campos.py` gets out of the script for hole 1

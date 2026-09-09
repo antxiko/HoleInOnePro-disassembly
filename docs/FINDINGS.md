@@ -95,15 +95,25 @@ who is going well, the field tightens.
 With a single player in TOURNAMENT, 0x4F4A also lets you **choose which
 professional you play against**, paging the list with the arrows.
 
-## The flag is not in the script
+## One roll of the die sets both the tee spot and the pin
 
-The script carries the green, but not where the flag is planted. That is rolled
-every round: 0x7005 throws a die modulo nine and the table at 0x70F2 gives the
-coordinates, on a three-by-three grid that differs per par — tighter on the par
-3s than on the 4s and 5s.
+0x7005 throws a die modulo nine, and that one number decides **two things at
+once**.
 
-Same for the wind and the green's slope: all three are rolled when the hole is
-built, and the level decides how much.
+Through the table at **0x70F2** it places **the ball inside the tee box**: 0x7024
+adds the entry to (0xCECA), the tee's coordinates in pixels, and the result goes
+to 0xC63F and 0xC640, the ball in the course view. The offsets run from 3 to 17
+pixels, exactly what the tee box measures — three tiles by two — and the grid
+differs per par.
+
+And through the table at **0x7128**, the **same number** places **the hole inside
+the green**: 0x7043 builds from it the cell at 0xCECD, where 0x715F writes tile
+0xD6, and the hole's coordinates at 0xC63D and 0xC63E. So where you tee off from
+and where the pin is when you get there are the same roll.
+
+The flag in the long view, by contrast, **is** in the script: it is tile 0xE9,
+and 0x6FA5 notes where it lands. What is rolled, besides the tee spot, are the
+wind and the green's slope, and the level decides how much.
 
 ## The hole's header is its palette
 

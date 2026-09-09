@@ -19,7 +19,7 @@ explicado.
 | densidad de comentario | **44,4 %** |
 | rutinas por debajo del 10 % | **0** |
 | destinos de `call` sin bautizar | **0** |
-| VRAM cotejada contra openMSX | **13.792 de 13.792** |
+| VRAM cotejada contra openMSX | **15.184 de 15.184** |
 | tests | 26 |
 
 ## El cartucho no está aquí

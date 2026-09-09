@@ -98,10 +98,10 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 <p>que es exactamente lo que el código dice que monta:</p>
 <table><tr><th>registro</th><th>valor</th><th>qué</th></tr><tr><td>R2</td><td>06</td><td>tabla de nombres en 0x1800</td></tr><tr><td>R3</td><td>FF</td><td>tabla de color en 0x2000</td></tr><tr><td>R4</td><td>03</td><td>tabla de patrones en 0x0000</td></tr><tr><td>R5</td><td>36</td><td>atributos de sprite en 0x1B00</td></tr><tr><td>R6</td><td>07</td><td>patrones de sprite en 0x3800</td></tr></table>
 <h2 id="el-resultado">El resultado</h2>
-<table><tr><th>zona</th><th>distintos</th><th>de</th></tr><tr><td>patrones, tercio 0</td><td>0</td><td>2.048</td></tr><tr><td>patrones, tercio 1</td><td>0</td><td>2.048</td></tr><tr><td>patrones, tercio 2</td><td>0</td><td>2.048</td></tr><tr><td>color, tercio 0</td><td>0</td><td>2.048</td></tr><tr><td>color, tercio 1</td><td>0</td><td>2.048</td></tr><tr><td>color, tercio 2</td><td>0</td><td>2.048</td></tr><tr><td>patrones de sprite</td><td>0</td><td>736</td></tr><tr><td>tabla de nombres de 0x3C00</td><td>0</td><td>768</td></tr><tr><td><b>total</b></td><td><b>0</b></td><td><b>13.792</b></td></tr></table>
-<p>Cero diferencias en todo lo que sale de una tabla.</p>
-<h2 id="los-treinta-bytes-que-si-bailan">Los treinta bytes que sí bailan</h2>
-<p>En el panel de la izquierda hay 30 bytes distintos de 264, y son exactamente los que el juego escribe en marcha:</p>
+<table><tr><th>zona</th><th>distintos</th><th>de</th></tr><tr><td>patrones, tercio 0</td><td>0</td><td>2.048</td></tr><tr><td>patrones, tercio 1</td><td>0</td><td>2.048</td></tr><tr><td>patrones, tercio 2</td><td>0</td><td>2.048</td></tr><tr><td>color, tercio 0</td><td>0</td><td>2.048</td></tr><tr><td>color, tercio 1</td><td>0</td><td>2.048</td></tr><tr><td>color, tercio 2</td><td>0</td><td>2.048</td></tr><tr><td>patrones de sprite</td><td>0</td><td>736</td></tr><tr><td>tabla de nombres de 0x3C00 (clasificación)</td><td>0</td><td>768</td></tr><tr><td>tabla de nombres de 0x1C00 (marcador)</td><td>0</td><td>768</td></tr><tr><td>tabla de nombres de 0x1800 (panel y hoyo 1)</td><td>0</td><td>624</td></tr><tr><td><b>total</b></td><td><b>0</b></td><td><b>15.184</b></td></tr></table>
+<p>Cero diferencias. Y la última fila es la que más dice: la pantalla de juego <b>entera</b> —el panel, las veinte columnas del mapa del hoyo 1 de QUEEN SIDE y las dos columnas de los bordes— sale igual que en la máquina.</p>
+<h2 id="las-diecisiete-casillas-que-si-bailan">Las diecisiete casillas que sí bailan</h2>
+<p>Están todas en las columnas 3 a 8, que es donde el juego escribe cifras en marcha:</p>
 <pre><code>lo que monta este repo      lo que hay en el emulador
 *TOP    +!                  *TOP ;18+!        -&gt; TOP +18
 *1UP    +!                  *1UP  &lt;0+!        -&gt; 1UP ±0
@@ -109,7 +109,7 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 *HOLE   +!                  *HOLE  1+!        -&gt; HOLE 1
 *     ? +!                  * 352 ? +!        -&gt; 352 m
 * PAR   +#                  * PAR 4 +#        -&gt; PAR 4</code></pre>
-<p>O sea: el TOP de fábrica, los golpes de los dos jugadores, el número de hoyo, la distancia, el par, el viento y el desnivel. Ninguno de ellos está en una tabla, y por eso no se comparan.</p>
+<p>O sea: el TOP de fábrica, los golpes de los dos jugadores, el número de hoyo, la distancia, el par, el viento y el desnivel. Ninguno de ellos sale de una tabla —los escribe el código con los valores de la partida—, y por eso esas seis columnas se dejan fuera del cotejo.</p>
 <p>Y de paso son otra comprobación: los <b>352 metros</b> y el <b>par 4</b> que el emulador enseña son los que <code>tools/campos.py</code> saca del guion del hoyo 1 de QUEEN SIDE, leyendo el par del tile del tee y los metros de los tres dígitos ASCII que cierran el guion.</p>
 <h2 id="lo-que-no-se-midio-en-el-emulador">Lo que NO se midió en el emulador</h2>
 <ul><li><b>El sonido.</b> Las doce pistas están seguidas byte a byte con el intérprete del propio cartucho, y los límites están medidos, pero nadie las ha escuchado contra lo que hace el PSG de verdad.</li><li><b>El editor.</b> Los rótulos, los sellos y el formato del fichero salen del código; no se ha grabado un campo y vuelto a cargar.</li><li><b>El rival.</b> Que ensaya el golpe está leído del código, no cronometrado.</li></ul>

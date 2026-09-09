@@ -112,5 +112,5 @@ tests/                     what is claimed, tied to the binary</code></pre>
 <p>This is the check that decides whether the images are worth anything. The dump comes out of openMSX:</p>
 <pre><code>openmsx -machine C-BIOS_MSX1_EU -cart holeinonepro.rom \
         -script tools/omsx_vram.tcl</code></pre>
-<p>and then <code>make vram</code> compares, byte for byte, the VRAM <code>tools/graficos.py</code> builds against the real one. <b>13,792 of 13,792</b> match across patterns, colour, sprites and name tables. The 30 bytes that differ are the figures the game writes as it plays: the TOP, the shot counts, the hole number, the distance, the par, the wind and the slope.</p>
+<p>and then <code>make vram</code> compares, byte for byte, the VRAM <code>tools/graficos.py</code> builds against the real one. <b>15,184 of 15,184</b> match across patterns, colour, sprites and all THREE name tables. The 17 cells that differ are the figures the game writes as it plays: the TOP, the shot counts, the hole number, the distance, the par, the wind and the slope.</p>
 <footer><p><em>Hole in One Professional</em> was published by HAL Laboratory for the MSX in 1986, in a 32 KB cartridge. All rights in the game remain with their holders. This is preservation, study and documentation work, and the cartridge image is not distributed.</p></footer></div>

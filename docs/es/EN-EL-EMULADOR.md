@@ -48,15 +48,19 @@ que es exactamente lo que el código dice que monta:
 | color, tercio 1 | 0 | 2.048 |
 | color, tercio 2 | 0 | 2.048 |
 | patrones de sprite | 0 | 736 |
-| tabla de nombres de 0x3C00 | 0 | 768 |
-| **total** | **0** | **13.792** |
+| tabla de nombres de 0x3C00 (clasificación) | 0 | 768 |
+| tabla de nombres de 0x1C00 (marcador) | 0 | 768 |
+| tabla de nombres de 0x1800 (panel y hoyo 1) | 0 | 624 |
+| **total** | **0** | **15.184** |
 
-Cero diferencias en todo lo que sale de una tabla.
+Cero diferencias. Y la última fila es la que más dice: la pantalla de juego
+**entera** —el panel, las veinte columnas del mapa del hoyo 1 de QUEEN SIDE y
+las dos columnas de los bordes— sale igual que en la máquina.
 
-## Los treinta bytes que sí bailan
+## Las diecisiete casillas que sí bailan
 
-En el panel de la izquierda hay 30 bytes distintos de 264, y son exactamente los
-que el juego escribe en marcha:
+Están todas en las columnas 3 a 8, que es donde el juego escribe cifras en
+marcha:
 
     lo que monta este repo      lo que hay en el emulador
     *TOP    +!                  *TOP ;18+!        -> TOP +18
@@ -67,8 +71,9 @@ que el juego escribe en marcha:
     * PAR   +#                  * PAR 4 +#        -> PAR 4
 
 O sea: el TOP de fábrica, los golpes de los dos jugadores, el número de hoyo, la
-distancia, el par, el viento y el desnivel. Ninguno de ellos está en una tabla, y
-por eso no se comparan.
+distancia, el par, el viento y el desnivel. Ninguno de ellos sale de una tabla —los
+escribe el código con los valores de la partida—, y por eso esas seis columnas se
+dejan fuera del cotejo.
 
 Y de paso son otra comprobación: los **352 metros** y el **par 4** que el
 emulador enseña son los que `tools/campos.py` saca del guion del hoyo 1 de QUEEN

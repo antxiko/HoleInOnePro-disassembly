@@ -140,7 +140,11 @@ def monta_vram(rom, org):
     for base in (0x2000, 0x2800, 0x3000):
         parejas(rom, org, 0xA5E6, base, base + 0x800, v)
     rachas(rom, org, 0x6898, SPRITES, 0x3AE0, v)   # 0x6649
-    rachas(rom, org, 0xABA1, NOMBRES, 0x1B00, v)   # 0x66C6
+    # 0x67D7 BORRA la tabla de nombres de 0x1800 con FILVRM antes de nada: en
+    # juego solo se escriben el panel (columnas 1 a 10) y el mapa (11 a 30), y
+    # las columnas 0 y 31 se quedan a cero. El fondo decorativo de 0xABA1 NO
+    # entra aqui: lo pinta 0x66C6, y a esa solo la llama 0x51CB, o sea la
+    # pantalla de creditos y de menu.
     rachas(rom, org, 0xACFB, NOMBRES2, 0x1F00, v)  # 0x6734
     hl = rachas(rom, org, 0xAE44, NOMBRES3, 0x3CA0, v)
     hl = 0x3CA0
@@ -149,6 +153,12 @@ def monta_vram(rom, org):
         hl += 0x20
     rachas(rom, org, 0xAE9B, hl, 0x3F00, v)
     return v
+
+
+def fondo_del_menu(rom, org, v):
+    """0x66C6: el fondo decorativo, en la tabla de nombres de 0x1800. Solo se
+    usa en la pantalla de creditos y en la de menu."""
+    rachas(rom, org, 0xABA1, NOMBRES, 0x1B00, v)
 
 
 def escribe_el_panel(rom, org, v):
@@ -457,12 +467,16 @@ ZONAS = [
     ("color tercio 2", 0x3000, 0x3800),
     ("patrones de sprite", 0x3800, 0x3AE0),
     ("tabla de nombres 3 (clasificacion)", 0x3C00, 0x3F00),
+    ("tabla de nombres 2 (marcador)", 0x1C00, 0x1F00),
 ]
 
 
 def comprueba(rom, org, carpeta):
     v = monta_vram(rom, org)
-    escribe_el_panel(rom, org, v)     # el volcado es de una vuelta en marcha
+    # El volcado es de una vuelta en marcha, con el hoyo 1 de QUEEN SIDE en
+    # pantalla: se monta lo mismo para poder comparar la pantalla ENTERA.
+    escribe_el_panel(rom, org, v)
+    pon_el_hoyo(v, hoyo(rom, org, 0)["rejilla"])
     volcados = sorted(f for f in os.listdir(carpeta) if f.endswith(".bin"))
     if not volcados:
         print("no hay volcados de VRAM en %s" % carpeta)
@@ -477,14 +491,23 @@ def comprueba(rom, org, carpeta):
             total += b - a
             fallos += n
             detalle.append((etiqueta, n, b - a))
-        # el panel de la izquierda de la tabla de nombres: columnas 0 a 10
-        n = p = 0
+        # La tabla de nombres de 0x1800 ENTERA -panel, mapa del hoyo y las dos
+        # columnas de los bordes-, menos las seis columnas del panel donde el
+        # juego escribe cifras en marcha, que son la 3 a la 8.
+        n = p = vn = vp = 0
         for f in range(24):
-            for c in range(11):
-                p += 1
-                if v[NOMBRES + f * 32 + c] != real[NOMBRES + f * 32 + c]:
-                    n += 1
-        vivos = (n, p)
+            for c in range(32):
+                distinta = v[NOMBRES + f * 32 + c] != real[NOMBRES + f * 32 + c]
+                if 3 <= c <= 8:
+                    vp += 1
+                    vn += distinta
+                else:
+                    p += 1
+                    n += distinta
+        detalle.append(("tabla de nombres 1 (panel y hoyo 1)", n, p))
+        total += p
+        fallos += n
+        vivos = (vn, vp)
         if peor is None or fallos < peor[1]:
             peor = (nombre, fallos, total, detalle, vivos)
     nombre, fallos, total, detalle, vivos = peor
@@ -492,10 +515,10 @@ def comprueba(rom, org, carpeta):
     for etiqueta, n, t in detalle:
         print("  %-38s %5d de %5d distintos" % (etiqueta, n, t))
     print("  ---- LO ESTATICO: %d bytes distintos de %d" % (fallos, total))
-    print("  ---- el panel de la izquierda tiene %d bytes distintos de %d, y son"
-          % vivos)
-    print("       las cifras que el juego escribe en marcha: el TOP, los golpes"
-          " de los dos")
+    print("  ---- las seis columnas de cifras del panel (3 a 8) tienen %d"
+          " distintas de %d," % vivos)
+    print("       y son lo que el juego escribe en marcha: el TOP, los golpes de"
+          " los dos")
     print("       jugadores, el numero de hoyo, la distancia, el par, el viento"
           " y el desnivel.")
     return 0 if fallos == 0 else 1
@@ -515,16 +538,17 @@ def main(argv):
     v = monta_vram(rom, org)
 
     c = bytearray(v)
+    fondo_del_menu(rom, org, c)
     cuatro_filas(rom, org, 0x51E5, c)
     pantalla(c, os.path.join(sal, "creditos.png"))
     m = bytearray(v)
+    fondo_del_menu(rom, org, m)
     cuatro_filas(rom, org, 0x5224, m)
     rotulos_del_menu(rom, org, m)
     pantalla(m, os.path.join(sal, "menu.png"))
     recorta(m, os.path.join(sal, "opciones.png"), 18, 4, 5, 22)
 
     escribe_el_panel(rom, org, v)                 # de aqui en adelante, en juego
-    pantalla(v, os.path.join(sal, "pantalla_de_juego.png"))
     numera_el_marcador(rom, org, v)
     pantalla(v, os.path.join(sal, "marcador.png"), base=NOMBRES2)
     pantalla(v, os.path.join(sal, "clasificacion.png"), base=NOMBRES3)

@@ -19,7 +19,7 @@ is accounted for.
 | comment density | **44.4 %** |
 | routines below 10 % | **0** |
 | `call` targets left unnamed | **0** |
-| VRAM checked against openMSX | **13,792 of 13,792** |
+| VRAM checked against openMSX | **15,184 of 15,184** |
 | tests | 26 |
 
 ## The cartridge is not here
