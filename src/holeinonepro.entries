@@ -1,0 +1,36 @@
+# Puntos de entrada de Hole in One Professional (HAL Laboratory, 1986). ROM de
+# 32 KB en 0x4000, o sea las paginas 1 y 2 (0x4000-0xBFFF).
+#
+# La cabecera "AB" declara UN solo gancho, no dos. Leidos del volcado, los
+# bytes 0-9 son 41 42 10 40 00 00 00 00 00 00:
+#   INIT      en 0x4010 (bytes 2-3: 10 40)
+#   STATEMENT, DEVICE y TEXT van a CERO.
+#
+# O sea que este cartucho NO registra ninguna sentencia BASIC: el CALL GOLF del
+# Hole in One de 1984 aqui no existe, y por tanto tampoco la carga de campos
+# desde cinta.
+0x4010   # INIT, la BIOS lo llama tras inicializar la maquina
+
+# LA INTERRUPCION, enganchada a mano en H.TIMI por L_6603:
+#   ld a,0f7h / ld (0fd9fh),a      0xF7 es RST 30h, o sea CALSLT
+#   ld a,(0fedbh) / ld (0fda0h),a  el slot, leido de EXPTBL
+#   ld hl,0665bh / ld (0fda1h),hl  y la direccion a la que llama
+# O sea que el gancho no es un JP sino una llamada ENTRE SLOTS, y el manejador
+# de verdad esta en 0x665B. El trazado estatico no puede llegar solo.
+0x665b   # manejador de interrupcion (vblank), enganchado en H.TIMI por 0x6603
+
+# LA TABLA DE DESPACHO DE 0xAFAD. Dos `jp (hl)` la usan:
+#   0xAFAC  lee el puntero de la tabla que guarda (0xCEED)
+#   0xAFCE  entra con HL puesto por el llamador y C como indice
+# y (0xCEED) sale de sitios como L_AF46, que hace `ld hl,0afb7h` -o sea un
+# desplazamiento DENTRO de esta misma tabla-. Los diez punteros se leen del
+# binario en 0xAFAD..0xAFC0; el byte 0xAFC1 en adelante ya no es puntero
+# (daria 0x0B0C, fuera de la ROM), y ahi acaba la tabla.
+0xafcf   # tabla de 0xAFAD, entrada 0
+0xb0ad   # tabla de 0xAFAD, entrada 1
+0xb117   # tabla de 0xAFAD, entrada 2
+0xb21a   # tabla de 0xAFAD, entrada 3
+0xb2d7   # tabla de 0xAFAD, entrada 4
+0xb304   # tabla de 0xAFAD, entrada 5
+0xb35c   # tabla de 0xAFAD, entrada 6
+0xb37c   # tabla de 0xAFAD, entradas 7, 8 y 9 (las tres apuntan aqui)

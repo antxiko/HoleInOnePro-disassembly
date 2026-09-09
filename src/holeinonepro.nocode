@@ -1,0 +1,21 @@
+# Zonas que NO son codigo, declaradas para que el trazador no entre en ellas.
+#
+# LA TABLA DE CAMPOS Y SUS GUIONES, 0x716B..0x9D6C.
+#
+# El trazador entraba aqui por un `call L_72D4` que hay en 0xBE32 -dentro de la
+# rutina de carga de cinta- y sacaba 1.176 bytes de codigo inventado, con un
+# `jp (hl)` en 0x7743 que no existe. Lo que hay de verdad es el campo:
+#
+#   0x716B..0x71B2   TREINTA Y SEIS punteros de dos bytes: DOS campos de
+#                    dieciocho hoyos, no uno
+#   0x71B3..0x9D6C   los treinta y seis guiones
+#
+# Medido, no supuesto: los 36 punteros se leen enteros con el mismo interprete
+# de guiones del Hole in One de 1984 y dan 480 celdas cada uno, con su par y
+# sus tres digitos ASCII de longitud. El campo 1 suma par 72 y 6.166 metros y
+# el campo 2 par 72 y 6.290 metros.
+#
+# Y el formato se mantiene porque el propio cartucho lo dice: 0x70B8 recorre el
+# guion buscando 0xD9, 0xDD y 0xE3 -los tres tees, que ademas dicen el par- y
+# 0x70D3 divide por 20, que sigue siendo el ancho de la rejilla.
+0x716b 0x9d6d
