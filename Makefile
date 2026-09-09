@@ -76,10 +76,17 @@ test:
 	@echo "=================================================================="
 	@python3 -m unittest discover -s tests -v
 
-# Dibuja los bloques de datos graficos declarados en el .notes, para MIRARLOS.
+# Dibuja las imagenes desde los bytes del cartucho, ejecutando en Python las
+# mismas rutinas que corre el Z80.
 imagenes: $(ROM)
-	@mkdir -p work/gfx
-	python3 tools/dibuja.py $(ROM) $(ORG) $(SRC)/holeinonepro.notes work/gfx
+	@mkdir -p docs/imagenes
+	python3 tools/graficos.py $(ROM) $(ORG) docs/imagenes
+
+# Y la comprobacion que decide: la VRAM montada aqui contra la del emulador.
+# El volcado se saca con:
+#   openmsx -machine C-BIOS_MSX1_EU -cart $(ROM) -script tools/omsx_vram.tcl
+vram: $(ROM)
+	python3 tools/graficos.py $(ROM) $(ORG) comprueba work/omsx
 
 # LA WEB
 #
@@ -87,13 +94,7 @@ imagenes: $(ROM)
 # escriben en markdown y se convierten con md2html.py; la portada la monta
 # make_web.py, que declara las cifras medidas de ESTE cartucho.
 web: $(ROM)
-	@test -f tools/graficos.py && python3 tools/graficos.py $(ROM) $(ORG) docs/imagenes || echo '  (aun no hay graficos.py)'
-	@mkdir -p work/campo
-	python3 tools/campo.py $(ROM) $(ORG) work/campo/prueba.bin 0xC000 \
-	        docs/imagenes/campo_propio.png
-	@test -f $(CINTA) \
-	  && python3 tools/campos_de_la_cinta.py $(ROM) $(ORG) $(CINTA) docs/imagenes \
-	  || echo '  (sin $(CINTA): los tres campos de la cinta no se redibujan)'
+	python3 tools/graficos.py $(ROM) $(ORG) docs/imagenes
 	python3 tools/md2html.py docs en
 	python3 tools/md2html.py docs/es es
 	python3 tools/make_web.py docs/imagenes docs/index.html en
@@ -103,4 +104,4 @@ web: $(ROM)
 clean:
 	rm -rf $(WORK)/holeinonepro.trace.json $(WORK)/holeinonepro.blocks
 
-.PHONY: all comprueba trace listado verify sanity test densidad imagenes web clean
+.PHONY: all comprueba trace listado verify sanity test densidad imagenes vram web clean

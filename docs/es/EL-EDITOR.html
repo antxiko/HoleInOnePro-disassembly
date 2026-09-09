@@ -1,0 +1,123 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>El editor — Hole in One Professional (HAL Laboratory, 1986)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Portada</a><a href="EMPEZAR.html">Empezar</a><a href="EL-JUEGO.html">El juego</a><a href="EL-CARTUCHO.html">El cartucho</a><a href="EL-CODIGO.html">El código</a><a href="HALLAZGOS.html">Hallazgos</a><a href="EL-EDITOR.html" style=color:var(--tinta)>El editor</a><a href="EN-EL-EMULADOR.html">En el emulador</a><a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a><a href="../THE-EDITOR.html" style="margin-left:auto;color:var(--oro)">English</a></nav>
+<h1 id="el-editor">El editor</h1>
+<p><code>GAME &gt;&gt;CONSTRUCTION</code> no es un modo de juego: es un <b>editor de campos</b> completo, y ocupa desde 0xAEA3 hasta el final del cartucho. Con él se dibujan dieciocho hoyos, se les mide la distancia, se prueban golpeando de verdad y se graban en cinta.</p>
+<h2 id="de-donde-viene">De dónde viene</h2>
+<p>De la cinta. En 1985 HAL sacó <em>Hole In One Extension Course</em>, y además de tres campos llevaba un fichero llamado <b>CONST</b>: 12 KB de programa que son el mismo editor. Los textos de dentro no dejan lugar a dudas —SETCHR, SET=UP, MOVE, SWAP, CLEAR, SAVE1, SAVE18, LOAD, FILES, DEVICE, NAME:, «GREEN OR TEE NOT FOUND»— y este cartucho <b>comparte 3.050 bytes con él en 24 tiras</b>, incluida la tabla de palos de 0x4B16 y la hoja de sprites entera.</p>
+<p>O sea que el editor de 1985 se metió dentro del cartucho de 1986.</p>
+<h2 id="tres-pantallas">Tres pantallas</h2>
+<p>(0xCED9) dice en cuál se está, y cada una tiene su propio cursor —0xCEDA, 0xCEDB y 0xCEDC—. IY apunta al que toca.</p>
+<table><tr><th>pantalla</th><th>opciones</th></tr><tr><td>0</td><td>HOLE · SETCHR · PAR · DIST. · SHOT · MOVE · WIND</td></tr><tr><td>1</td><td>la de dibujar</td></tr><tr><td>2</td><td>SAVE · LOAD · COPY · SWAP · CLEAR</td></tr></table>
+<p>La opción elegida se despacha por la tabla de 0xAFAD con un <code>jp (hl)</code>, y 0xAFB3 y 0xAFB7 son desplazamientos <b>dentro de esa misma tabla</b>: las tres pantallas comparten el despachador.</p>
+<h2 id="donde-vive-un-campo-de-usuario">Dónde vive un campo de usuario</h2>
+<p>Los dieciocho hoyos están en RAM, desde 0xD04B y de 480 en 480 bytes; los punteros están en la tabla de 0xBEF0. Y de cada hoyo se guardan aparte tres cosas:</p>
+<ul><li>el <b>par</b> (0xCF38 + hoyo),</li><li>si tiene <b>green y tee</b> (0xCF26 + hoyo),</li><li>y los <b>tres dígitos de la distancia</b> (0xCF48 + 3 × hoyo).</li></ul>
+<h2 id="pintar">Pintar</h2>
+<p>Se pinta casilla a casilla, con la que se haya elegido en SETCHR de entre las <b>136</b> que ofrece la lista de 0xBCD1. La barra suelta una, la Z suelta dos.</p>
+<p>Hay dos casillas que no se pueden pisar: de 0xD7 a 0xF7 son green y tee, y 0xB01B lo comprueba antes de escribir. Para ponerlas están los ocho <b>sellos</b> de 0xBD93: tres tees —uno por par, de tres por dos casillas— y cinco greens, de cuatro por dos y con la bandera dentro. 0xB9B4 comprueba que el sello cabe antes de soltarlo, y al soltar un tee apunta el par del hoyo y al soltar un green lo marca como completo.</p>
+<h2 id="medir-la-distancia">Medir la distancia</h2>
+<p><code>DIST.</code> es lo más curioso del editor. No mide en línea recta: te hace <b>marcar hasta tres puntos</b> —tantos como el par menos dos— y suma el recorrido de tee a punto, de punto a punto y de punto a bandera (0xB1A7). El total se dobla, se acota a 999 y se escribe en tres dígitos.</p>
+<p>Y ahí hay un detalle bonito: antes de acotar, 0xB1D3 lee el <b>registro R de refresco</b> del Z80 y con su bit 0 suma uno o no. Es un dado gratis, y sirve para que la cifra no salga siempre par.</p>
+<p>Si el hoyo no tiene green o no tiene tee, el editor no deja medir: escribe «GREEN OR TEE NOT FOUND.» y se queda ahí.</p>
+<h2 id="probar-el-hoyo">Probar el hoyo</h2>
+<p><code>SHOT</code> juega un golpe de verdad sobre el hoyo que se está editando, con la misma rutina que la partida. Durante el golpe hay tres teclas propias: <code>0x0B</code> lleva la mira a la bandera, <code>0x2F</code> la devuelve a donde estaba, y la cruceta cambia el viento —izquierda y derecha la fuerza, arriba y abajo la dirección—.</p>
+<h2 id="swap-trae-los-hoyos-del-cartucho">SWAP trae los hoyos del cartucho</h2>
+<p><code>SWAP</code> no cambia dos hoyos de sitio: <b>trae un hoyo de los dos campos de la ROM</b>. La cruceta pasa por los treinta y seis, y 0xB3F2 pone (0xC000) apuntando a 0x716B, sale del modo editor un momento para poder interpretar el guion desde la ROM, monta el hoyo y lo copia al buffer con su par y su distancia.</p>
+<p>Así que un campo de usuario puede empezar siendo QUEEN SIDE con dos hoyos cambiados.</p>
+<h2 id="y-lo-que-graba-es-el-fichero-de-1984">Y lo que graba es el fichero de 1984</h2>
+<p>Ésta es la mejor parte. 0xBF14 comprime los dieciocho hoyos al formato de guion —0xBFAE hace la compresión por rachas contra los tres materiales de 0xBFF2— y le pone delante estos veintiún bytes:</p>
+<pre><code>push af / push hl
+ld hl,0c066h / ld (0e000h),hl
+ld hl,0c08ah / ld (0e002h),hl
+ld a,001h    / ld (0e004h),a
+pop hl / pop af / ret</code></pre>
+<p>Ese trozo no es de este cartucho. Es <b>exactamente</b> el que llevan delante los ficheros SDATA, WDATA y NDATA de la cinta de 1985, y lo que hace es apuntar 0xE000 y 0xE002 —las dos tablas del <em>Hole in One</em> de 1984— al campo recién cargado.</p>
+<p>Y las cuentas cuadran. En el fichero de la cinta el trozo está en 0xC050 y las dos tablas en 0xC066 y 0xC08A, o sea a 0x16 y a 0x3A bytes del principio. Aquí el trozo se copia a 0xCF81, la tabla de los dieciocho hoyos se llena en 0xCF97 y la segunda en 0xCFBB: 0x16 y 0x3A. El mismo fichero, byte a byte.</p>
+<p>**Un campo hecho con el editor de este cartucho de 1986 se carga en el <em>Hole in One</em> de 1984** con <code>BLOAD&quot;CAS:&quot;,R</code> y <code>CALL GOLF</code>.</p>
+<h2 id="la-cinta-y-el-truco-de-la-pagina">La cinta, y el truco de la página</h2>
+<p>Grabar y cargar es lo que hace que 0xBE32 llame a 0x72D4, una dirección que en este cartucho cae en medio de los guiones de campo. El truco está una instrucción antes: 0xBE16 hace ENASLT con EXPTBL[0] y <b>la página 1 pasa a ser la ROM de BASIC</b>, cuyas rutinas de casete están en 0x6FD7, 0x700B, 0x72D4 y 0x72E9.</p>
+<p>La página 2, donde vive todo el editor, no se toca. Por eso el código puede seguir corriendo mientras su propia primera mitad está fuera del mapa. Al acabar, 0xBE1B la devuelve con la ranura que <code>init</code> guardó en 0xFEDB nada más arrancar.</p>
+<footer><p><em>Hole in One Professional</em> lo publico HAL Laboratory para MSX en 1986, en un cartucho de 32 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion, y la imagen del cartucho no se distribuye.</p></footer></div>

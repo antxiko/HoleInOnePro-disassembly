@@ -1,0 +1,133 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hallazgos — Hole in One Professional (HAL Laboratory, 1986)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Portada</a><a href="EMPEZAR.html">Empezar</a><a href="EL-JUEGO.html">El juego</a><a href="EL-CARTUCHO.html">El cartucho</a><a href="EL-CODIGO.html">El código</a><a href="HALLAZGOS.html" style=color:var(--tinta)>Hallazgos</a><a href="EL-EDITOR.html">El editor</a><a href="EN-EL-EMULADOR.html">En el emulador</a><a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a><a href="../FINDINGS.html" style="margin-left:auto;color:var(--oro)">English</a></nav>
+<h1 id="hallazgos">Hallazgos</h1>
+<p>Lo que apareció al desmontarlo, con la dirección de cada cosa para que se pueda comprobar.</p>
+<h2 id="quien-lo-hizo-dicho-por-el-propio-cartucho">Quién lo hizo, dicho por el propio cartucho</h2>
+<p>La pantalla de créditos no es una captura: son cuatro filas de veintiún caracteres que 0x51BF suelta en la tabla de nombres, expandidas del texto comprimido de 0x51E5.</p>
+<pre><code>© HAL LABORATORY 1985
+PRODUCER   F.NAKAMURA
+PROGRAMMER S.IWATA</code></pre>
+<p>La arroba es el símbolo de copyright en la fuente del cartucho, y el <code>&gt;</code> es el punto: se ve en la propia tabla de patrones. El cartucho es de 1986 y sus créditos dicen 1985.</p>
+<h2 id="el-rival-no-calcula-el-golpe-lo-ensaya">El rival no calcula el golpe: lo ensaya</h2>
+<p>Es el hallazgo grande. Cuando le toca jugar al ordenador, 0x5B39 le sortea unos valores de partida —fuerza entre 0x18 y 0x1B, curva entre 0x19 y 0x20, el ángulo hacia la bandera y un palo sacado de dividir la distancia por ocho— y entonces entra en el bucle de 0x5BB4, que <b>juega el golpe entero con la física de verdad</b>.</p>
+<p>Al acabar mira dónde ha caído la bola y reacciona:</p>
+<table><tr><th>lo que pasa</th><th>qué cambia</th></tr><tr><td>se va al agua (0x5CB4)</td><td>un dado decide si sube o baja el palo, la fuerza, el ángulo o la curva</td></tr><tr><td>se queda corta (0x5DFA)</td><td>abanica el ángulo, o sube un palo y baja un punto de fuerza</td></tr><tr><td>se pasa (0x5E76)</td><td>recorta la fuerza en proporción</td></tr><tr><td>fuera o en búnker (0x5DB4)</td><td>baja un palo</td></tr><tr><td><b>entra</b> (0x5D95)</td><td>se rebaja un punto, para no meterla siempre</td></tr></table>
+<p>Y vuelve a tirarlo. Hasta que le gusta, o hasta que se le acaban los intentos que tiene (0xC119, que crece si va perdiendo: de 4 a 6 cuando pierde por tres o más).</p>
+<p>Sólo entonces 0x5408 lo repite delante del jugador, moviendo las barras de fuerza y curva hasta los valores ya decididos. <b>Lo que se ve no es el golpe: es la reposición del ensayo.</b> Durante el ensayo, (0xC118) a uno apaga el mando, la espera de cuadro y el dibujado, así que las decenas de golpes que se juega el rival caben entre dos fotogramas.</p>
+<p>En el green hace lo mismo con el putt (0x6091), y ahí la fuerza de partida es la mitad de la distancia más tres.</p>
+<h2 id="el-terreno-se-decide-por-el-pixel">El terreno se decide por el píxel</h2>
+<p>0x629C clasifica lo que hay bajo la bola por el número de casilla: de 0x60 a 0x77 árboles, de 0x94 a 0xB3 búnker, de 0xB4 a 0xD1 agua. Pero las casillas que están a caballo entre dos terrenos no se pueden resolver así, y para ésas el cartucho <b>lee la VRAM</b>.</p>
+<ul><li><b>0x63B1</b> saca de la tabla de patrones el bit exacto que hay bajo la bola, con la máscara que le toca de las ocho de 0x63E9.</li><li><b>0x63D3</b> lee de la tabla de <b>color</b> el nibble de ese píxel: el alto si el bit está encendido, el bajo si no.</li></ul>
+<p>Con eso se separa la calle del rough, el búnker del agua y el talud de lo demás. La colisión con el decorado la resuelve el dibujo, y no una segunda tabla que hubiera que mantener a juego con él.</p>
+<h2 id="la-honra-del-golf-esta-programada">La honra del golf está programada</h2>
+<p>En golf, entre dos jugadores, tira el que está más lejos del hoyo. 0x46FA lo hace: mide las dos distancias con 0x475C —la diferencia en X y en Y, cada una en valor absoluto y a la mitad para que quepan, y la raíz de la suma de cuadrados— y le da el turno al que peor está. Si los dos han llegado al green, además pasa a la vista corta.</p>
+<h2 id="los-treinta-y-cinco-profesionales">Los treinta y cinco profesionales</h2>
+<p>En 0x5009, uno detrás de otro y sin puntero ni longitud: el <b>bit 7 del último carácter</b> marca dónde acaba cada nombre.</p>
+<pre><code>C.STRANGE  L.WADKINS  C.PEETE     R.FLOYD    C.PAVIN
+M.OMEARA   C.STADLER  B.LANGER    T.WATSON   F.ZOELLER
+R.MALTBIE  H.IRWIN    T.KITE      P.STEWART  L.MIZE
+H.SUTTON   J.SINDELAR J.MAHAFFEY  S.BALLESTEROS  P.JACOBSEN
+L.RINKER   B.EASTWOOD D.POOLEY    G.BURNS    S.SIMPSON
+I.AOKI     L.NELSON   J.NICKLAUS  G.NORMAN   L.TREVINO
+T.NAKAJIMA M.KURAMOTO B.LIETZKE   T.OZAKI    N.OZAKI</code></pre>
+<p>Y el torneo no los simula golpe a golpe. Por cada hoyo, 0x4EC9 tira un dado, le resta la dificultad propia que a cada uno se le sorteó al empezar la vuelta (0xC09B), le suma su <b>ajuste fijo</b> de la tabla de 0x5130 —un byte de 0 a 7 por golfista— y mira en qué tramo cae. Los tramos dan +2, +1, par, −1 y −2, y hay <b>tres tablas</b> de tramos: la que se usa depende de si el jugador va por debajo, en el par o por encima. Contra un jugador que va bien, el circuito aprieta.</p>
+<p>Con un jugador solo en TOURNAMENT, 0x4F4A te deja además <b>elegir contra qué profesional juegas</b>, pasando la lista con las flechas.</p>
+<h2 id="la-bandera-no-esta-en-el-guion">La bandera no está en el guion</h2>
+<p>El guion trae el green, pero no dónde se clava la bandera. Eso se sortea en cada partida: 0x7005 tira un dado módulo nueve y la tabla de 0x70F2 da las coordenadas, en una rejilla de tres por tres distinta para cada par —más cerrada en los pares 3 que en los 4 y 5—.</p>
+<p>Lo mismo con el viento y con el desnivel del green: los tres se sortean al montar el hoyo, y el nivel decide cuánto.</p>
+<h2 id="la-cabecera-del-hoyo-es-su-paleta">La cabecera del hoyo es su paleta</h2>
+<p>Un hoyo ocupa 311 bytes de media, y el truco está en los tres primeros. El cartucho los copia a 0xCEC0 y ahí se quedan. Después, en el guion, un byte <code>0x3n</code>, <code>0x4n</code> o <code>0x5n</code> repite <em>n</em>+1 veces el primero, el segundo o el tercero.</p>
+<p>Lo que engancha las dos cosas es una resta de tres: el índice sale del <b>nibble alto</b> del opcode y la tabla de la que se lee empieza en <b>0xCEBD</b>, tres bytes antes de la cabecera, justo para que el 3, el 4 y el 5 caigan encima de ella. No hay tabla de paleta: hay un desplazamiento que hace que la cabecera del hoyo <em>sea</em> la paleta.</p>
+<p>Es el mismo formato, byte a byte, que el <em>Hole in One</em> de 1984.</p>
+<h2 id="el-call-0x72d4-que-no-apunta-aqui">El <code>call 0x72D4</code> que no apunta aquí</h2>
+<p>En 0xBE32 hay un <code>call 072d4h</code>, y 0x72D4 cae en medio de los guiones de campo. No es un error de trazado: esa dirección <b>ya no es el cartucho</b> cuando se ejecuta.</p>
+<pre><code>L_BE16   ld a,(0fcc1h)   ; EXPTBL[0], la ranura de la ROM principal
+         ld hl,04000h
+         jp 00024h       ; ENASLT: la página 1 pasa a ser la BASIC ROM</code></pre>
+<p>0x6FD7, 0x700B, 0x72D4 y 0x72E9 son rutinas de casete de la ROM de BASIC. La página 2, donde vive todo ese código, no se toca, y por eso puede seguir corriendo mientras su propia primera mitad está fuera. Al acabar, 0xBE1B la devuelve con la ranura que <code>init</code> guardó en 0xFEDB.</p>
+<h2 id="diecinueve-bytes-que-no-llama-nadie">Diecinueve bytes que no llama nadie</h2>
+<p>0xB885 es una rutina completa —monta 10×H+L de (0xCEF9) y devuelve carry si el resultado es cero o pasa de 18, o sea que comprueba un número de hoyo— y <b>sus dos bytes no aparecen en ningún sitio de la ROM</b>. La rutina de antes acaba en un <code>ret</code>, así que tampoco se cae dentro. Es código muerto del editor.</p>
+<footer><p><em>Hole in One Professional</em> lo publico HAL Laboratory para MSX en 1986, en un cartucho de 32 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion, y la imagen del cartucho no se distribuye.</p></footer></div>

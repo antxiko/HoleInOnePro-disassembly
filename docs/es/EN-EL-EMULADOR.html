@@ -1,0 +1,117 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>En el emulador — Hole in One Professional (HAL Laboratory, 1986)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Portada</a><a href="EMPEZAR.html">Empezar</a><a href="EL-JUEGO.html">El juego</a><a href="EL-CARTUCHO.html">El cartucho</a><a href="EL-CODIGO.html">El código</a><a href="HALLAZGOS.html">Hallazgos</a><a href="EL-EDITOR.html">El editor</a><a href="EN-EL-EMULADOR.html" style=color:var(--tinta)>En el emulador</a><a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a><a href="../IN-THE-EMULATOR.html" style="margin-left:auto;color:var(--oro)">English</a></nav>
+<h1 id="en-el-emulador">En el emulador</h1>
+<p>Lo que se midió con openMSX, y para qué.</p>
+<h2 id="para-que-se-uso">Para qué se usó</h2>
+<p>Para una sola cosa, pero la que decide: <b>comprobar que las imágenes de esta web no son una interpretación</b>. Todas se dibujan ejecutando en Python los mismos descompresores y los mismos intérpretes que corre el Z80. Si alguno estuviera mal entendido, lo que saldría sería ruido —o, peor, algo que se ve bien y está mal—. La única forma de saberlo es coger la VRAM de verdad y compararla.</p>
+<h2 id="como">Cómo</h2>
+<p><code>tools/omsx_vram.tcl</code> no pone <b>ningún punto de ruptura</b>: los volcados van por reloj emulado, para que no dependan de en qué instrucción se pare el emulador.</p>
+<pre><code>openmsx -machine C-BIOS_MSX1_EU -cart holeinonepro.rom \
+        -script tools/omsx_vram.tcl</code></pre>
+<p>Saca cinco volcados de los 16 KB de VRAM y, con cada uno, los ocho registros del VDP y una captura. Luego:</p>
+<pre><code>make vram</code></pre>
+<h2 id="lo-que-dicen-los-registros">Lo que dicen los registros</h2>
+<pre><code>02 E2 06 FF 03 36 07 F1</code></pre>
+<p>que es exactamente lo que el código dice que monta:</p>
+<table><tr><th>registro</th><th>valor</th><th>qué</th></tr><tr><td>R2</td><td>06</td><td>tabla de nombres en 0x1800</td></tr><tr><td>R3</td><td>FF</td><td>tabla de color en 0x2000</td></tr><tr><td>R4</td><td>03</td><td>tabla de patrones en 0x0000</td></tr><tr><td>R5</td><td>36</td><td>atributos de sprite en 0x1B00</td></tr><tr><td>R6</td><td>07</td><td>patrones de sprite en 0x3800</td></tr></table>
+<h2 id="el-resultado">El resultado</h2>
+<table><tr><th>zona</th><th>distintos</th><th>de</th></tr><tr><td>patrones, tercio 0</td><td>0</td><td>2.048</td></tr><tr><td>patrones, tercio 1</td><td>0</td><td>2.048</td></tr><tr><td>patrones, tercio 2</td><td>0</td><td>2.048</td></tr><tr><td>color, tercio 0</td><td>0</td><td>2.048</td></tr><tr><td>color, tercio 1</td><td>0</td><td>2.048</td></tr><tr><td>color, tercio 2</td><td>0</td><td>2.048</td></tr><tr><td>patrones de sprite</td><td>0</td><td>736</td></tr><tr><td>tabla de nombres de 0x3C00</td><td>0</td><td>768</td></tr><tr><td><b>total</b></td><td><b>0</b></td><td><b>13.792</b></td></tr></table>
+<p>Cero diferencias en todo lo que sale de una tabla.</p>
+<h2 id="los-treinta-bytes-que-si-bailan">Los treinta bytes que sí bailan</h2>
+<p>En el panel de la izquierda hay 30 bytes distintos de 264, y son exactamente los que el juego escribe en marcha:</p>
+<pre><code>lo que monta este repo      lo que hay en el emulador
+*TOP    +!                  *TOP ;18+!        -&gt; TOP +18
+*1UP    +!                  *1UP  &lt;0+!        -&gt; 1UP ±0
+* 1UP   +!                  * 1UP  0+!        -&gt; SHOTS 1UP 0
+*HOLE   +!                  *HOLE  1+!        -&gt; HOLE 1
+*     ? +!                  * 352 ? +!        -&gt; 352 m
+* PAR   +#                  * PAR 4 +#        -&gt; PAR 4</code></pre>
+<p>O sea: el TOP de fábrica, los golpes de los dos jugadores, el número de hoyo, la distancia, el par, el viento y el desnivel. Ninguno de ellos está en una tabla, y por eso no se comparan.</p>
+<p>Y de paso son otra comprobación: los <b>352 metros</b> y el <b>par 4</b> que el emulador enseña son los que <code>tools/campos.py</code> saca del guion del hoyo 1 de QUEEN SIDE, leyendo el par del tile del tee y los metros de los tres dígitos ASCII que cierran el guion.</p>
+<h2 id="lo-que-no-se-midio-en-el-emulador">Lo que NO se midió en el emulador</h2>
+<ul><li><b>El sonido.</b> Las doce pistas están seguidas byte a byte con el intérprete del propio cartucho, y los límites están medidos, pero nadie las ha escuchado contra lo que hace el PSG de verdad.</li><li><b>El editor.</b> Los rótulos, los sellos y el formato del fichero salen del código; no se ha grabado un campo y vuelto a cargar.</li><li><b>El rival.</b> Que ensaya el golpe está leído del código, no cronometrado.</li></ul>
+<p>Está dicho en <a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a>.</p>
+<footer><p><em>Hole in One Professional</em> lo publico HAL Laboratory para MSX en 1986, en un cartucho de 32 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion, y la imagen del cartucho no se distribuye.</p></footer></div>

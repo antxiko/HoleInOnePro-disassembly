@@ -26,6 +26,7 @@ NAV_EN = [("index.html", "Home"), ("GETTING-STARTED.html", "Start"),
           ("THE-CARTRIDGE.html", "The cartridge"),
           ("THE-CODE.html", "The code"),
           ("FINDINGS.html", "Findings"),
+          ("THE-EDITOR.html", "The editor"),
           ("IN-THE-EMULATOR.html", "In the emulator"),
           ("OPEN-QUESTIONS.html", "Open questions")]
 NAV_ES = [("index.html", "Portada"), ("EMPEZAR.html", "Empezar"),
@@ -33,6 +34,7 @@ NAV_ES = [("index.html", "Portada"), ("EMPEZAR.html", "Empezar"),
           ("EL-CARTUCHO.html", "El cartucho"),
           ("EL-CODIGO.html", "El código"),
           ("HALLAZGOS.html", "Hallazgos"),
+          ("EL-EDITOR.html", "El editor"),
           ("EN-EL-EMULADOR.html", "En el emulador"),
           ("PREGUNTAS-ABIERTAS.html", "Preguntas abiertas")]
 
@@ -43,6 +45,7 @@ _PAREJAS = [("GETTING-STARTED.html", "EMPEZAR.html"),
             ("THE-CARTRIDGE.html", "EL-CARTUCHO.html"),
             ("THE-CODE.html", "EL-CODIGO.html"),
             ("FINDINGS.html", "HALLAZGOS.html"),
+            ("THE-EDITOR.html", "EL-EDITOR.html"),
             ("IN-THE-EMULATOR.html", "EN-EL-EMULADOR.html"),
             ("OPEN-QUESTIONS.html", "PREGUNTAS-ABIERTAS.html")]
 PAREJA = {}

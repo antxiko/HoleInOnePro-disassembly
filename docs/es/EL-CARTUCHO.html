@@ -1,0 +1,119 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>El cartucho — Hole in One Professional (HAL Laboratory, 1986)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Portada</a><a href="EMPEZAR.html">Empezar</a><a href="EL-JUEGO.html">El juego</a><a href="EL-CARTUCHO.html" style=color:var(--tinta)>El cartucho</a><a href="EL-CODIGO.html">El código</a><a href="HALLAZGOS.html">Hallazgos</a><a href="EL-EDITOR.html">El editor</a><a href="EN-EL-EMULADOR.html">En el emulador</a><a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a><a href="../THE-CARTRIDGE.html" style="margin-left:auto;color:var(--oro)">English</a></nav>
+<h1 id="el-cartucho">El cartucho</h1>
+<p>32.768 bytes que se mapean en las páginas 1 y 2, o sea de 0x4000 a 0xBFFF.</p>
+<h2 id="la-cabecera">La cabecera</h2>
+<p>Los diez primeros bytes son la cabecera AB del MSX:</p>
+<pre><code>41 42 10 40 00 00 00 00 00 00
+&#x27;A&#x27;&#x27;B&#x27; INIT  STATEMENT  DEVICE  TEXT</code></pre>
+<p><b>Sólo declara INIT</b>, en 0x4010. STATEMENT, DEVICE y TEXT están a cero, y eso es justo lo que separa a este cartucho del <em>Hole in One</em> de 1984: aquél registraba una sentencia BASIC —<code>CALL GOLF</code>— y por eso podía cargar campos de cinta. Éste no. Los campos de fuera entran por otro sitio: por el editor.</p>
+<h2 id="el-reparto">El reparto</h2>
+<table><tr><th>desde</th><th>hasta</th><th>qué</th></tr><tr><td>0x4000</td><td>0x4010</td><td>la cabecera AB</td></tr><tr><td>0x4010</td><td>0x5009</td><td>arranque, menú, marcador y bucle de la vuelta</td></tr><tr><td>0x5009</td><td>0x5175</td><td>los treinta y cinco golfistas y sus tablas</td></tr><tr><td>0x5175</td><td>0x52DE</td><td>los textos de la pantalla de título</td></tr><tr><td>0x52DE</td><td>0x63E9</td><td>el golpe: punterí­a, barras, vuelo y física</td></tr><tr><td>0x63E9</td><td>0x6603</td><td>terreno, cálculo y las tablas de trigonometría</td></tr><tr><td>0x6603</td><td>0x6C0D</td><td>pantalla, interrupción, mando y reproductor de PSG</td></tr><tr><td>0x6C0D</td><td>0x6F49</td><td>la tabla de tonos y las doce pistas</td></tr><tr><td>0x6F49</td><td>0x716B</td><td>el montador de hoyos</td></tr><tr><td>0x716B</td><td>0x9DDD</td><td><b>los dos campos</b>: 36 punteros, 36 guiones y el green</td></tr><tr><td>0x9DDD</td><td>0x9F85</td><td>la vista corta y el swing</td></tr><tr><td>0x9F85</td><td>0xAEA3</td><td>todo lo que se decomprime a la VRAM</td></tr><tr><td>0xAEA3</td><td>0xC000</td><td><b>el editor de campos</b> y la cinta</td></tr></table>
+<p>En cifras: <b>14.186 bytes de código trazado</b> y <b>18.582 de datos con nombre</b>. Cero sin explicar.</p>
+<h2 id="como-arranca">Cómo arranca</h2>
+<p><code>init</code> (0x4010) hace lo de siempre y una cosa más. Primero averigua en qué ranura está él mismo —RSLREG, la tabla de subranuras de 0xFCC1— y <b>se guarda el resultado en 0xFEDB</b>. Esa nota le hará falta mucho más tarde, cuando la rutina de cinta cambie la página 1 por la ROM de BASIC y haya que devolverla.</p>
+<p>Luego mete su propia segunda mitad en la página 2 con ENASLT, borra de una tirada 0xC002–0xF300, deja el campo QUEEN SIDE como el de fábrica y el TOP en 0x12 —dieciocho, un golpe por encima del par en cada hoyo—, arranca el PSG, engancha la interrupción y se va a la exhibición.</p>
+<h2 id="la-interrupcion-entre-ranuras">La interrupción, entre ranuras</h2>
+<p>0x6603 no mete un <code>jp</code> en H.TIMI: mete una <b>llamada entre ranuras</b>.</p>
+<pre><code>ld a,0f7h        ; 0xF7 es RST 30h, o sea CALSLT
+ld (0fd9fh),a
+ld a,(0fedbh)    ; la ranura, la que init dejó apuntada
+ld (0fda0h),a
+ld hl,0665bh     ; y la dirección
+ld (0fda1h),hl</code></pre>
+<p>Tiene que ser así porque el manejador vive dentro del cartucho, y cuando salta la interrupción no hay ninguna garantía de que el cartucho esté paginado. El manejador (0x665B) hace dos cosas: marca que ha pasado un cuadro y le da un paso al reproductor de PSG.</p>
+<h2 id="tres-pantallas-en-la-vram">Tres pantallas en la VRAM</h2>
+<p>El SCREEN 2 del MSX tiene una tabla de nombres, pero el registro 2 del VDP dice dónde. Este cartucho monta tres y va cambiando ese registro:</p>
+<table><tr><th>dirección</th><th>qué es</th><th>cómo se llega</th></tr><tr><td>0x1800</td><td>la pantalla de juego</td><td>el valor de fábrica, R2=0x06</td></tr><tr><td>0x1C00</td><td>el marcador de dieciocho hoyos</td><td>0x678B, <code>xor 1</code></td></tr><tr><td>0x3C00</td><td>la clasificación del torneo</td><td>0x67CC, <code>xor 9</code></td></tr></table>
+<p>Pulsar F1 o F2 durante la partida no redibuja nada. Enseña otra pantalla que ya estaba montada, y al soltar la tecla se vuelve a la de antes.</p>
+<h2 id="los-tres-tercios-de-una-sola-tabla">Los tres tercios, de una sola tabla</h2>
+<p>El SCREEN 2 son tres tercios independientes, y para que los tres tengan lo mismo hay que escribirlo tres veces. 0x66D4 hace las seis llamadas —tres de patrones y tres de color— y las tres de cada clase descomprimen <b>la misma fuente</b>: 2 KB de cartucho por 6 KB de tabla.</p>
+<p>Y hay un segundo modo de carga escondido en el mismo sitio. 0x66D4 empieza con un <code>or 0AFh</code>, que son los bytes <code>F6 AF</code>. Entrando en <b>0x66D5</b> —el segundo byte de esa instrucción— lo que se ejecuta es <code>xor a</code> suelto: A se pone a cero, Z se levanta y las seis llamadas cargan sólo la cola de cada tercio, los 360 bytes de la fuente, en vez del tercio entero. 0x6788 lo usa para devolver la letra después de enseñar el marcador, sin repintar los gráficos.</p>
+<h2 id="los-once-bloques-comprimidos">Los once bloques comprimidos</h2>
+<p>Hay dos descompresores, y se distinguen por el byte de escape:</p>
+<ul><li><b>0x6AFA</b>, por rachas: <code>0xA0</code>–<code>0xAF</code> quiere decir (n &amp; 0x0F) + 2 copias del byte siguiente.</li><li><b>0x6ABD</b>, por parejas: <code>0x00</code>–<code>0x0F</code> quiere decir (n &amp; 0x0F) + 1 vueltas de un <b>par</b> de bytes que se alternan. Es la de las tablas de color de SCREEN 2, donde los bytes van a pares.</li></ul>
+<p>Los dos paran cuando el <b>destino</b> llega a su tope, no cuando se acaba la entrada. Así que dónde acaba cada bloque no está escrito en ninguna parte: se sabe descomprimiéndolo. Hecho eso, los once encajan uno detrás de otro <b>sin un byte suelto</b>, desde 0x9F85 hasta 0xAEA3. Es la mejor prueba de que el formato está entendido, y hay un test que la vigila.</p>
+<footer><p><em>Hole in One Professional</em> lo publico HAL Laboratory para MSX en 1986, en un cartucho de 32 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion, y la imagen del cartucho no se distribuye.</p></footer></div>

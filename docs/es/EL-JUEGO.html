@@ -1,0 +1,111 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>El juego — Hole in One Professional (HAL Laboratory, 1986)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Portada</a><a href="EMPEZAR.html">Empezar</a><a href="EL-JUEGO.html" style=color:var(--tinta)>El juego</a><a href="EL-CARTUCHO.html">El cartucho</a><a href="EL-CODIGO.html">El código</a><a href="HALLAZGOS.html">Hallazgos</a><a href="EL-EDITOR.html">El editor</a><a href="EN-EL-EMULADOR.html">En el emulador</a><a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a><a href="../THE-GAME.html" style="margin-left:auto;color:var(--oro)">English</a></nav>
+<h1 id="el-juego">El juego</h1>
+<p><em>Hole in One Professional</em> es la segunda vuelta de HAL sobre su golf de 1984. Donde aquél tenía un campo, éste tiene dos; donde aquél cargaba campos de cinta, éste trae <b>un editor dentro</b>; y donde aquél te dejaba jugar solo o contra otro, éste te sienta enfrente a treinta y cinco profesionales de verdad.</p>
+<h2 id="el-menu">El menú</h2>
+<p>Cuatro líneas, y las cuatro salen del binario:</p>
+<table><tr><th>línea</th><th>variable</th><th>valores</th></tr><tr><td>PLAYER</td><td>0xC003</td><td>1 o 2</td></tr><tr><td>LEVEL</td><td>0xC007</td><td>AVERAGE · EXPERT · PROFESSIONAL</td></tr><tr><td>GAME</td><td>0xC005</td><td>STROKE PLAY · MATCH PLAY · TOURNAMENT · CONSTRUCTION</td></tr><tr><td>COURSE</td><td>0xC004</td><td>QUEEN SIDE · KING SIDE · USER</td></tr></table>
+<p><code>USER</code> sólo aparece si hay un campo de usuario cargado: 0x40EF y 0x40FD miran (0xCED3) y, si está a cero, tratan la línea como si tuviera dos valores en vez de tres.</p>
+<p>Y el nivel no es sólo cosmética. Decide la velocidad de las barras de fuerza y curva (0x560A: uno en AVERAGE, dos en PROFESSIONAL), la anchura de la ventana de acierto (0x53B1 usa una ventana por palo en AVERAGE y una por cada dos palos de EXPERT en adelante), la dispersión al salir del rough (0x584C: 0x26 contra 0x40) y la fuerza del viento (0x7073 le quita el bit 6 en AVERAGE).</p>
+<h2 id="los-dos-campos">Los dos campos</h2>
+<table><tr><th>campo</th><th>par</th><th>longitud</th><th>pares 3</th><th>pares 4</th><th>pares 5</th></tr><tr><td>QUEEN SIDE</td><td>72</td><td>6.166 m</td><td>4</td><td>10</td><td>4</td></tr><tr><td>KING SIDE</td><td>72</td><td>6.290 m</td><td>4</td><td>10</td><td>4</td></tr></table>
+<p>Mismo par y mismo reparto, y sin embargo treinta y seis hoyos distintos. KING SIDE es más largo y, mirándolos, bastante más duro: más agua, calles más estrechas y mucho más negro —que es la casilla 0x00, y el juego la trata como fuera de límites—.</p>
+<p>Los treinta y seis guiones ocupan 11.193 bytes en total, 311 de media por hoyo.</p>
+<h2 id="el-golpe">El golpe</h2>
+<p>Tres pasos, y los tres son la misma máquina con distintos topes:</p>
+<ol><li><b>la puntería</b>, que la cruceta gira grado a grado (0x54AF);</li><li><b>la fuerza</b>, una barra que sube y baja entre 0 y 0x1C y que el disparo para (0x55E6);</li><li><b>la curva</b>, otra barra entre 0 y 0x38 (0x5676).</li></ol>
+<p>La fuerza que sale de la barra no es la que se usa: la de verdad es <code>(0xC641) × 8 + 0x1F</code>, o sea que hay un mínimo que no se puede quitar. Y lo que decide si la bola sale recta es la ventana de 0x5495: dos bytes por palo, el límite de abajo y el de arriba. Si la barra de curva se para por debajo del primero, la diferencia se guarda como <b>gancho</b>; por encima del segundo, como <b>slice</b>. Luego, durante el vuelo, 0x58F0 va torciendo el ángulo un grado cada tantos cuadros.</p>
+<p>Con el putter no hay barra de curva: 0x539F sólo la juega si el palo es menor que 13.</p>
+<h2 id="los-quince-palos">Los quince palos</h2>
+<pre><code>1W 2W 3W 4W | 3I 4I 5I 6I | 7I 8I 9I | PW SW PT PT</code></pre>
+<p>Tres bytes por palo en 0x4B16: el primero agrupa el swing —0x00 las maderas, 0x04 y 0x08 los hierros, 0x0C los wedges y el putter— y los otros dos son las dos letras del rótulo. La última entrada repite PT, y no es un descuido: en el campo se puede elegir el palo 13 y en el green el juego fuerza el 14 (0x5589).</p>
+<p>Y esa misma tabla, byte a byte, está en el fichero CONST de la cinta <em>Hole In One Extension Course</em> de 1985.</p>
+<h2 id="los-modos">Los modos</h2>
+<ul><li><b>STROKE PLAY</b>: se cuentan golpes y ya está.</li><li><b>MATCH PLAY</b>: se cuentan hoyos ganados. 0x43BD lleva la ventaja (0xC074) y quién la tiene (0xC073), y cuando la ventaja pasa de los hoyos que quedan, el partido se acaba con su «3 AND 2» escrito a mano en 0x4451.</li><li><b>TOURNAMENT</b>: treinta y seis participantes, treinta y cinco de ellos profesionales reales, con clasificación en vivo.</li><li><b>CONSTRUCTION</b>: el editor. Tiene <a href="EL-EDITOR.html">su propia página</a>.</li></ul>
+<h2 id="las-teclas">Las teclas</h2>
+<table><tr><th>tecla</th><th>qué hace</th></tr><tr><td>F1</td><td>enseña el marcador de dieciocho hoyos</td></tr><tr><td>F2</td><td>la clasificación del torneo (con las flechas se pasa página)</td></tr><tr><td>F10 y luego F6</td><td>vuelve al menú</td></tr><tr><td>STOP</td><td>cancela el golpe que se está preparando</td></tr></table>
+<p>F1 y F2 no redibujan nada: cambian el registro 2 del VDP para enseñar otra tabla de nombres que ya estaba montada.</p>
+<footer><p><em>Hole in One Professional</em> lo publico HAL Laboratory para MSX en 1986, en un cartucho de 32 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion, y la imagen del cartucho no se distribuye.</p></footer></div>
