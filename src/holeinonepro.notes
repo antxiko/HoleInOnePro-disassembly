@@ -284,7 +284,7 @@ C 0x4172 pide el nombre del jugador 1
 C 0x417a y el del 2 solo si hay dos jugadores
 C 0x4185 si no, la maquina se monta su cuadro de rivales
 C 0x4188 y se ordena la clasificacion de salida
-C 0x418b monta SCREEN 2 y decomprime todo lo que va en VRAM
+C 0x418b monta SCREEN 2 y carga los tiles del juego, que pisan los del rotulo
 C 0x418e la segunda tabla de nombres, la de 0x1C00, con el marcador
 C 0x4194 y los numeros de hoyo del marcador
 C 0x419a la musica de la vuelta
@@ -1434,6 +1434,14 @@ D 0x6ddf 0x6f49 pista_11  Pista 11, la mas larga (362 bytes) y la unica que da v
 # verdad (tools/descomprime.py). Encajan uno detras de otro sin un byte suelto,
 # desde 0x9F85 hasta 0xAEA3.
 #
+# EL ROTULO Y EL JUEGO SE TURNAN LOS MISMOS CUARENTA Y CINCO TILES. Los de
+# 0xD3 a 0xFF son el rotulo de la pantalla de titulo -HOLE IN ONE arriba y
+# Professional debajo, con una bola de golf de punto- si los carga 0x66D5, y
+# son el tee, el green y la bandera si los carga 0x66D4 con el bloque grande de
+# 0x9F85. Y esas dos direcciones son la MISMA instruccion: 0x66D4 es un
+# `or 0afh` (F6 AF) y 0x66D5 es su operando suelto, que ejecutado vale `xor a`.
+# Entrar por un byte o por el siguiente cambia el flag Z y con el, los tiles.
+#
 # Y HAY TRES TABLAS DE NOMBRES EN LA VRAM, no una: 0x1800, 0x1C00 y 0x3C00. El
 # cartucho cambia de pantalla entera escribiendo el registro 2 del VDP (0x678B
 # lo hace con un XOR 1 y 0x67CC con un XOR 9), de modo que el marcador y la
@@ -1448,9 +1456,9 @@ D 0x9f85 0xa5e6 patrones_comprimidos  La tabla de patrones entera, 2.048 bytes a
 D 0xa5e6 0xa7d2 colores_comprimidos  La tabla de color, 2.048 bytes a 0x2000, comprimida a pares
 D 0xa7d2 0xa90c patrones_del_green  Los patrones de la vista del green: 0x9DF3 los suelta en 0x1168-0x1300
 D 0xa90c 0xaa0e colores_del_green  Y sus colores, en 0x3168-0x3300
-D 0xaa0e 0xaafd patrones_del_texto  Los 360 bytes de patrones que llevan la fuente: 0x670A los repone en 0x0698 de cada tercio sin tocar el resto
-D 0xaafd 0xaba1 colores_del_texto  Y sus colores, en 0x2698 de cada tercio
-D 0xaba1 0xacfb pantalla_de_juego  La tabla de nombres de 0x1800: el panel y el campo
+D 0xaa0e 0xaafd patrones_del_rotulo  EL ROTULO DEL TITULO: 360 bytes, o sea los CUARENTA Y CINCO tiles de 0xD3 a 0xFF, que 0x670A suelta en 0x0698 de cada tercio sin tocar el resto. En partida esos mismos tiles los ocupan el tee, el green y la bandera, que vienen del bloque grande de 0x9F85: el cartucho los intercambia entrando en una instruccion o en la siguiente
+D 0xaafd 0xaba1 colores_del_rotulo  Y los colores del rotulo, en 0x2698 de cada tercio: el degradado rojo de HOLE IN ONE y el verde de Professional
+D 0xaba1 0xacfb pantalla_de_titulo  La tabla de nombres de 0x1800 de la PANTALLA DE TITULO: el rotulo puesto en casillas. Gasta 416 de sus 768 casillas en los cuarenta y cinco tiles de 0xD3 a 0xFF. En partida esta tabla no se usa: 0x67D7 la borra a cero y solo se escriben el panel y el mapa
 D 0xacfb 0xae44 pantalla_del_marcador  La tabla de nombres de 0x1C00: el marcador de dieciocho hoyos
 D 0xae44 0xae90 pantalla_del_torneo  Los cinco primeros renglones de la tabla de nombres de 0x3C00, la de la clasificacion
 D 0xae90 0xae9b renglon_del_torneo  Un solo renglon de 32 casillas, que 0x674E repite dieciocho veces para las dieciocho lineas de la clasificacion
@@ -1845,23 +1853,23 @@ C 0x66b1 y mando 2
 C 0x66bb sin disparo: carry, o sea que se agoto la espera
 L 0x66bd atajo_de_reinicio  F10 y luego F6 vuelve al menu
 C 0x66c0 0xF6 es F6: las dos teclas seguidas reinician
-L 0x66c6 repinta_la_pantalla_de_juego  Repone la tabla de nombres de 0x1800
-L 0x66d4 repone_los_patrones  Con A distinto de cero repone los patrones ENTEROS; entrando en 0x66D5 -o sea un byte mas alla- el `or 0AFh` se convierte en `xor a` y solo repone la fuente
-C 0x66d4 0xF6 0xAF es `or 0afh`; entrando en el byte de en medio, el 0xAF suelto es `xor a`
+L 0x66c6 monta_la_pantalla_de_titulo  Descomprime la tabla de nombres del titulo y cae en 0x66D5, que carga los tiles del rotulo
+L 0x66d4 pon_los_patrones  Con A distinto de cero carga los patrones ENTEROS, los del juego; entrando en 0x66D5 -o sea un byte mas alla- el `or 0AFh` se convierte en `xor a`, Z se levanta y lo que se carga son los cuarenta y cinco tiles del ROTULO
+C 0x66d4 0xF6 0xAF es `or 0afh`; entrando en el byte de en medio, el 0xAF suelto es `xor a`, y eso es lo que cambia los tiles del juego por los del rotulo
 C 0x66d7 apagada mientras se llena
-C 0x66db y se apunta cual de las dos se ha hecho
+C 0x66db 0xCA40 apunta cual de los dos juegos de tiles esta cargado: 0xAF los del juego, 0 los del rotulo
 C 0x66de primer tercio de patrones
 C 0x66e4 segundo
 C 0x66ea tercero
 C 0x66f0 y los tres de color
-L 0x6702 repone_un_tercio_de_patrones  Los 2 KB del tercio, o solo sus ultimos 360 bytes
-C 0x6703 con Z, solo la cola
-C 0x6705 y si no, el tercio entero
-L 0x670a repone_la_fuente  Los 360 bytes de patrones de texto, en 0x0698 del tercio
+L 0x6702 pon_un_tercio_de_patrones  Los 2 KB del tercio -los del juego-, o solo los ultimos 360 bytes, que son el rotulo
+C 0x6703 con Z, solo los cuarenta y cinco tiles del rotulo
+C 0x6705 y si no, el tercio entero, que son los del juego
+L 0x670a pon_el_rotulo  Los 360 bytes del rotulo, en 0x0698 del tercio
 C 0x670c el tope del tercio
-C 0x670f 0x698 es donde empieza la fuente dentro del tercio
-L 0x671b repone_un_tercio_de_color  Lo mismo, para la tabla de color
-L 0x6723 repone_el_color_de_la_fuente  Los 360 bytes de color del texto
+C 0x670f 0x698 es el tile 0xD3, donde empieza el rotulo dentro del tercio
+L 0x671b pon_un_tercio_de_color  Lo mismo, para la tabla de color
+L 0x6723 pon_el_color_del_rotulo  Los 360 bytes de color del rotulo
 L 0x6734 monta_las_otras_pantallas  Llena la tabla de nombres de 0x1C00 y la de 0x3C00
 C 0x6734 0x1C00 es la SEGUNDA tabla de nombres: el marcador
 C 0x6740 y 0x3C00 la TERCERA: la clasificacion del torneo
@@ -1869,11 +1877,11 @@ C 0x674c dieciocho lineas iguales
 C 0x674e treinta y dos casillas cada una
 C 0x6760 y el renglon de abajo
 L 0x6769 ensena_el_marcador  F1: pasa a la tabla de nombres de 0x1C00 hasta que se pulse otra tecla
-C 0x676e si hacia falta, repone los patrones de texto
+C 0x676e desde el titulo hay que cargar los tiles del juego para poder dibujar el marcador
 C 0x6771 cambia el registro 2 del VDP
 C 0x6774 0x1B00 es el primer sprite: se aparta
 C 0x6780 y se espera a una tecla
-C 0x6788 al volver, repone solo la fuente
+C 0x6788 y al volver, devuelve los tiles del rotulo
 L 0x678b cambia_de_tabla_de_nombres  XOR 1 sobre el registro 2 del VDP: alterna 0x1800 y 0x1C00
 C 0x678b 0xF3E1 es la copia en RAM del registro 2
 C 0x678e el bit 0 vale 0x400, o sea la distancia entre las dos tablas
@@ -2956,7 +2964,7 @@ C 0x51b3 con el disparo se corta
 C 0x51b7 hoyo siguiente
 C 0x51b9 y al llegar al 18, vuelta a los creditos
 C 0x51c3 aparta el primer sprite
-C 0x51cb repinta la pantalla de juego
+C 0x51cb monta la pantalla de titulo, con su rotulo
 C 0x51ce el texto que se pasa
 C 0x51cf 0x1A46 es la primera de las cuatro filas
 C 0x51d4 veintiun caracteres por fila
@@ -3799,7 +3807,7 @@ C 0x6076 mas lo que se pide
 C 0x607c y si cabe, se queda
 C 0x6723 el tope del tercio
 C 0x6724 la base, mas ocho
-C 0x6728 0x698 es donde empieza el color del texto
+C 0x6728 0x698 es el tile 0xD3, donde empieza el color del rotulo
 C 0x672c su bloque comprimido
 C 0x672f con el descompresor de pares
 C 0x5e9d se recorta la fuerza en proporcion

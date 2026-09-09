@@ -80,6 +80,23 @@ emulator shows are the ones `tools/campos.py` gets out of the script for hole 1
 of QUEEN SIDE, reading the par off the tee tile and the metres off the three
 ASCII digits that close the script.
 
+## And the title screen
+
+The dumps above do not reach it: the cartridge goes off into the eighteen-hole
+attract mode and takes over a minute to get to the menu. `tools/omsx_menu.tcl`
+presses the space bar at ten seconds to cut it short — 0x66A0 returns on the
+trigger — and dumps afterwards.
+
+| area | different | of |
+|---|---|---|
+| patterns, all three thirds | 0 | 6,144 |
+| colour, all three thirds | 0 | 6,144 |
+| name table at 0x1800 (title and menu) | 0 | 768 |
+| **total** | **0** | **13,056** |
+
+There is the wordmark, with its tiles from 0xAA0E on top of the playing ones. And
+the whole name table, the menu's four lines included.
+
 ## What was NOT measured in the emulator
 
 - **The sound.** The twelve tracks are followed byte by byte with the

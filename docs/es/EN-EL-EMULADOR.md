@@ -80,6 +80,23 @@ emulador enseña son los que `tools/campos.py` saca del guion del hoyo 1 de QUEE
 SIDE, leyendo el par del tile del tee y los metros de los tres dígitos ASCII que
 cierran el guion.
 
+## Y la pantalla de título
+
+Los volcados de arriba no la alcanzan: el cartucho se va a la exhibición de los
+dieciocho hoyos y tarda más de un minuto en llegar al menú. `tools/omsx_menu.tcl`
+pulsa el espacio a los diez segundos para cortarla —0x66A0 sale con el disparo— y
+vuelca después.
+
+| zona | distintos | de |
+|---|---|---|
+| patrones, los tres tercios | 0 | 6.144 |
+| color, los tres tercios | 0 | 6.144 |
+| tabla de nombres de 0x1800 (título y menú) | 0 | 768 |
+| **total** | **0** | **13.056** |
+
+Ahí está el rótulo, con sus tiles de 0xAA0E encima de los del juego. Y la tabla
+de nombres entera, con las cuatro líneas del menú incluidas.
+
 ## Lo que NO se midió en el emulador
 
 - **El sonido.** Las doce pistas están seguidas byte a byte con el intérprete del

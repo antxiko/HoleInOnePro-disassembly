@@ -111,6 +111,10 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 * PAR   +#                  * PAR 4 +#        -&gt; PAR 4</code></pre>
 <p>That is: the factory TOP, both players&#x27; shot counts, the hole number, the distance, the par, the wind and the slope. None of them comes out of a table — the code writes them from the state of the round — which is why those six columns are left out of the comparison.</p>
 <p>And they double as another check: the <b>352 metres</b> and the <b>par 4</b> the emulator shows are the ones <code>tools/campos.py</code> gets out of the script for hole 1 of QUEEN SIDE, reading the par off the tee tile and the metres off the three ASCII digits that close the script.</p>
+<h2 id="and-the-title-screen">And the title screen</h2>
+<p>The dumps above do not reach it: the cartridge goes off into the eighteen-hole attract mode and takes over a minute to get to the menu. <code>tools/omsx_menu.tcl</code> presses the space bar at ten seconds to cut it short — 0x66A0 returns on the trigger — and dumps afterwards.</p>
+<table><tr><th>area</th><th>different</th><th>of</th></tr><tr><td>patterns, all three thirds</td><td>0</td><td>6,144</td></tr><tr><td>colour, all three thirds</td><td>0</td><td>6,144</td></tr><tr><td>name table at 0x1800 (title and menu)</td><td>0</td><td>768</td></tr><tr><td><b>total</b></td><td><b>0</b></td><td><b>13,056</b></td></tr></table>
+<p>There is the wordmark, with its tiles from 0xAA0E on top of the playing ones. And the whole name table, the menu&#x27;s four lines included.</p>
 <h2 id="what-was-not-measured-in-the-emulator">What was NOT measured in the emulator</h2>
 <ul><li><b>The sound.</b> The twelve tracks are followed byte by byte with the cartridge&#x27;s own interpreter and their boundaries are measured, but nobody has listened to them against what the real PSG does.</li><li><b>The editor.</b> Its labels, stamps and file format come out of the code; no course has been saved and loaded back.</li><li><b>The opponent.</b> That it rehearses the shot is read off the code, not timed.</li></ul>
 <p>It is said in <a href="OPEN-QUESTIONS.html">Open questions</a>.</p>

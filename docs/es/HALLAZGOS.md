@@ -17,6 +17,27 @@ La arroba es el símbolo de copyright en la fuente del cartucho, y el `>` es el
 punto: se ve en la propia tabla de patrones. El cartucho es de 1986 y sus
 créditos dicen 1985.
 
+## El rótulo y el campo se turnan los mismos cuarenta y cinco tiles
+
+La pantalla de título lleva un rótulo que ocupa media pantalla: **HOLE IN ONE**
+en bloque sobre un degradado rojo y **Professional** en cursiva sobre verde, con
+una bola de golf haciendo de punto. Y no está guardado aparte: son los tiles
+**0xD3 a 0xFF**, los mismos cuarenta y cinco que en partida son el tee, el green
+y la bandera.
+
+El cartucho los intercambia entrando **en una instrucción o en la siguiente**.
+0x66D4 es un `or 0AFh`, o sea los dos bytes `F6 AF`: llamando ahí, Z se va a cero
+y las seis llamadas de detrás cargan los 2 KB del bloque grande de 0x9F85, que
+traen los tiles del juego. Pero 0x66C6 acaba en un `jr $+3` que cae en
+**0x66D5**, el segundo byte de esa misma instrucción, y `0xAF` por su cuenta es
+`xor a`: A se pone a cero, **Z se levanta** y entonces las seis cargan sólo los
+360 bytes de 0xAA0E y 0xAAFD, que son el rótulo.
+
+(0xCA40) apunta cuál de los dos juegos está puesto, y por eso pulsar F1 en el
+menú carga los del juego para poder dibujar el marcador y luego devuelve los del
+rótulo. La pantalla de título gasta **416 de sus 768 casillas** en esos cuarenta
+y cinco tiles.
+
 ## El rival no calcula el golpe: lo ensaya
 
 Es el hallazgo grande. Cuando le toca jugar al ordenador, 0x5B39 le sortea unos

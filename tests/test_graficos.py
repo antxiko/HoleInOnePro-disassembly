@@ -22,6 +22,7 @@ import textos as T                                              # noqa: E402
 ROM = os.path.join(RAIZ, "holeinonepro.rom")
 ORG = 0x4000
 OMSX = os.path.join(RAIZ, "work", "omsx")
+OMSX_MENU = os.path.join(RAIZ, "work", "omsx-menu")
 
 
 def rom():
@@ -169,6 +170,33 @@ class TestVram(unittest.TestCase):
                          for i in range(a, b) if v[i] != real[i])
             if mejor is None or fallos < mejor[1]:
                 mejor = (nombre, fallos)
+        self.assertEqual(mejor[1], 0,
+                         "%d bytes distintos contra %s" % (mejor[1], mejor[0]))
+
+
+class TestPantallaDeTitulo(unittest.TestCase):
+    """El rotulo: la pantalla de titulo entera contra la del emulador."""
+
+    def test_el_rotulo_son_los_tiles_de_0xaa0e(self):
+        """416 de las 768 casillas de la pantalla de titulo usan tiles de 0xD3
+        en adelante, que son justo los 45 que cubre el bloque de 0xAA0E."""
+        d = rom()
+        v = bytearray(0x4000)
+        G.rachas(d, ORG, 0xABA1, 0x1800, 0x1B00, v)
+        altos = sum(1 for i in range(768) if v[0x1800 + i] >= 0xD3)
+        self.assertEqual(altos, 416)
+        distintos = len({v[0x1800 + i] for i in range(768) if v[0x1800 + i] >= 0xD3})
+        self.assertEqual(distintos, 45)
+        self.assertEqual((0x800 - 0x698) // 8, 45)
+
+    def test_la_pantalla_de_titulo_es_la_del_emulador(self):
+        if not os.path.isdir(OMSX_MENU) or not [f for f in os.listdir(OMSX_MENU)
+                                                if f.endswith(".bin")]:
+            self.skipTest("no hay volcado de la pantalla de titulo en "
+                          "work/omsx-menu; se saca con tools/omsx_menu.tcl")
+        d = rom()
+        mejor = G.comprueba_el_titulo(d, ORG, OMSX_MENU)
+        self.assertIsNotNone(mejor)
         self.assertEqual(mejor[1], 0,
                          "%d bytes distintos contra %s" % (mejor[1], mejor[0]))
 

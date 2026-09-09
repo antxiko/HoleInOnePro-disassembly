@@ -260,7 +260,7 @@ L_4185:
 L_4188:
 	call monta_el_cuadro_del_torneo		;4188   ; y se ordena la clasificacion de salida
 L_418B:
-	call monta_la_pantalla		;418b   ; monta SCREEN 2 y decomprime todo lo que va en VRAM
+	call monta_la_pantalla		;418b   ; monta SCREEN 2 y carga los tiles del juego, que pisan los del rotulo
 	call monta_las_otras_pantallas		;418e   ; la segunda tabla de nombres, la de 0x1C00, con el marcador
 	call ordena_la_clasificacion		;4191   ; ordena la clasificacion de salida
 	call numera_el_marcador		;4194   ; y los numeros de hoyo del marcador
@@ -2476,7 +2476,7 @@ escribe_cuatro_filas:		; Cuatro filas de veintiun caracteres desde 0x1A46
 	ld hl,01b00h		;51c3   ; aparta el primer sprite
 	ld a,0d0h		;51c6
 	call 0004dh		;51c8   ; BIOS WRTVRM - Writes data in VRAM
-	call repinta_la_pantalla_de_juego		;51cb   ; repinta la pantalla de juego
+	call monta_la_pantalla_de_titulo		;51cb   ; monta la pantalla de titulo, con su rotulo
 	pop de			;51ce   ; el texto que se pasa
 	ld hl,01a46h		;51cf   ; 0x1A46 es la primera de las cuatro filas
 	ld c,004h		;51d2
@@ -5329,7 +5329,7 @@ monta_la_pantalla:		; SCREEN 2, decomprime todo lo que va a la VRAM y escribe el
 	ld hl,03800h		;664c
 	ld bc,03ae0h		;664f
 	call descomprime_hasta		;6652   ; con el descompresor de rachas
-	call repone_los_patrones		;6655   ; y los patrones y colores de los tres tercios
+	call pon_los_patrones		;6655   ; y los patrones y colores de los tres tercios
 	jp escribe_el_panel		;6658   ; y por ultimo el panel de la izquierda
 manejador_de_interrupcion:		; Lo llama H.TIMI: marca el cuadro y da un paso al reproductor de PSG
 	ld hl,0ca33h		;665b   ; 0xCA33 es la marca de cuadro nuevo
@@ -5399,59 +5399,59 @@ atajo_de_reinicio:		; F10 y luego F6 vuelve al menu
 	cp 0f6h		;66c0   ; 0xF6 es F6: las dos teclas seguidas reinician
 	ret nz			;66c2
 	jp L_4069		;66c3
-repinta_la_pantalla_de_juego:		; Repone la tabla de nombres de 0x1800
+monta_la_pantalla_de_titulo:		; Descomprime la tabla de nombres del titulo y cae en 0x66D5, que carga los tiles del rotulo
 	ld hl,01800h		;66c6
 	ld bc,01b00h		;66c9
 	ld de,0aba1h		;66cc
 	call descomprime_hasta		;66cf
 	jr $+3		;66d2
-repone_los_patrones:		; Con A distinto de cero repone los patrones ENTEROS; entrando en 0x66D5 -o sea un byte mas alla- el `or 0AFh` se convierte en `xor a` y solo repone la fuente
-	or 0afh		;66d4   ; 0xF6 0xAF es `or 0afh`; entrando en el byte de en medio, el 0xAF suelto es `xor a`
+pon_los_patrones:		; Con A distinto de cero carga los patrones ENTEROS, los del juego; entrando en 0x66D5 -o sea un byte mas alla- el `or 0AFh` se convierte en `xor a`, Z se levanta y lo que se carga son los cuarenta y cinco tiles del ROTULO
+	or 0afh		;66d4   ; 0xF6 0xAF es `or 0afh`; entrando en el byte de en medio, el 0xAF suelto es `xor a`, y eso es lo que cambia los tiles del juego por los del rotulo
 	push af			;66d6
 	call 00041h		;66d7   ; BIOS DISSCR - Inhibits the screen display | apagada mientras se llena
 	pop af			;66da
-	ld (0ca40h),a		;66db   ; y se apunta cual de las dos se ha hecho
+	ld (0ca40h),a		;66db   ; 0xCA40 apunta cual de los dos juegos de tiles esta cargado: 0xAF los del juego, 0 los del rotulo
 	ld hl,00000h		;66de   ; primer tercio de patrones
-	call repone_un_tercio_de_patrones		;66e1
+	call pon_un_tercio_de_patrones		;66e1
 	ld hl,00800h		;66e4   ; segundo
-	call repone_un_tercio_de_patrones		;66e7
+	call pon_un_tercio_de_patrones		;66e7
 	ld hl,01000h		;66ea   ; tercero
-	call repone_un_tercio_de_patrones		;66ed
+	call pon_un_tercio_de_patrones		;66ed
 	ld hl,02000h		;66f0   ; y los tres de color
-	call repone_un_tercio_de_color		;66f3
+	call pon_un_tercio_de_color		;66f3
 	ld hl,02800h		;66f6
-	call repone_un_tercio_de_color		;66f9
+	call pon_un_tercio_de_color		;66f9
 	ld hl,03000h		;66fc
-	jp repone_un_tercio_de_color		;66ff
-repone_un_tercio_de_patrones:		; Los 2 KB del tercio, o solo sus ultimos 360 bytes
+	jp pon_un_tercio_de_color		;66ff
+pon_un_tercio_de_patrones:		; Los 2 KB del tercio -los del juego-, o solo los ultimos 360 bytes, que son el rotulo
 	push af			;6702
-	jr z,repone_la_fuente		;6703   ; con Z, solo la cola
-	call descomprime_patrones		;6705   ; y si no, el tercio entero
+	jr z,pon_el_rotulo		;6703   ; con Z, solo los cuarenta y cinco tiles del rotulo
+	call descomprime_patrones		;6705   ; y si no, el tercio entero, que son los del juego
 	pop af			;6708
 	ret			;6709
-repone_la_fuente:		; Los 360 bytes de patrones de texto, en 0x0698 del tercio
+pon_el_rotulo:		; Los 360 bytes del rotulo, en 0x0698 del tercio
 	ld c,l			;670a
 	ld a,h			;670b
 	add a,008h		;670c   ; el tope del tercio
 	ld b,a			;670e
-	ld de,00698h		;670f   ; 0x698 es donde empieza la fuente dentro del tercio
+	ld de,00698h		;670f   ; 0x698 es el tile 0xD3, donde empieza el rotulo dentro del tercio
 	add hl,de			;6712
 	ld de,0aa0eh		;6713
 	call descomprime_hasta		;6716
 	pop af			;6719
 	ret			;671a
-repone_un_tercio_de_color:		; Lo mismo, para la tabla de color
+pon_un_tercio_de_color:		; Lo mismo, para la tabla de color
 	push af			;671b
-	jr z,repone_el_color_de_la_fuente		;671c
+	jr z,pon_el_color_del_rotulo		;671c
 	call descomprime_color		;671e
 	pop af			;6721
 	ret			;6722
-repone_el_color_de_la_fuente:		; Los 360 bytes de color del texto
+pon_el_color_del_rotulo:		; Los 360 bytes de color del rotulo
 	ld c,l			;6723   ; el tope del tercio
 	ld a,h			;6724   ; la base, mas ocho
 	add a,008h		;6725
 	ld b,a			;6727
-	ld de,00698h		;6728   ; 0x698 es donde empieza el color del texto
+	ld de,00698h		;6728   ; 0x698 es el tile 0xD3, donde empieza el color del rotulo
 	add hl,de			;672b
 	ld de,0aafdh		;672c   ; su bloque comprimido
 	call descomprime_color_hasta		;672f   ; con el descompresor de pares
@@ -5486,7 +5486,7 @@ ensena_el_marcador:		; F1: pasa a la tabla de nombres de 0x1C00 hasta que se pul
 	ld a,(0ca40h)		;6769
 	and a			;676c
 	push af			;676d
-	call z,repone_los_patrones		;676e   ; si hacia falta, repone los patrones de texto
+	call z,pon_los_patrones		;676e   ; desde el titulo hay que cargar los tiles del juego para poder dibujar el marcador
 	call cambia_de_tabla_de_nombres		;6771   ; cambia el registro 2 del VDP
 	ld hl,01b00h		;6774   ; 0x1B00 es el primer sprite: se aparta
 	call 0004ah		;6777   ; BIOS RDVRM - Reads the content of VRAM
@@ -5497,7 +5497,7 @@ ensena_el_marcador:		; F1: pasa a la tabla de nombres de 0x1C00 hasta que se pul
 	pop af			;6783
 	call 0004dh		;6784   ; BIOS WRTVRM - Writes data in VRAM
 	pop af			;6787
-	call z,repone_los_patrones+1		;6788   ; al volver, repone solo la fuente
+	call z,pon_los_patrones+1		;6788   ; y al volver, devuelve los tiles del rotulo
 cambia_de_tabla_de_nombres:		; XOR 1 sobre el registro 2 del VDP: alterna 0x1800 y 0x1C00
 	ld a,(0f3e1h)		;678b   ; 0xF3E1 es la copia en RAM del registro 2
 	xor 001h		;678e   ; el bit 0 vale 0x400, o sea la distancia entre las dos tablas
@@ -7638,10 +7638,13 @@ DATA_colores_del_green:
 	defb 064h,064h	; aa0c
 
 ; ----------------------------------------------------------------------
-; DATOS patrones_del_texto: Los 360 bytes de patrones que llevan la fuente:
-;   0x670A los repone en 0x0698 de cada tercio sin tocar el resto
+; DATOS patrones_del_rotulo: EL ROTULO DEL TITULO: 360 bytes, o sea los
+;   CUARENTA Y CINCO tiles de 0xD3 a 0xFF, que 0x670A suelta en 0x0698 de cada
+;   tercio sin tocar el resto. En partida esos mismos tiles los ocupan el tee,
+;   el green y la bandera, que vienen del bloque grande de 0x9F85: el cartucho
+;   los intercambia entrando en una instruccion o en la siguiente
 ;   0xaa0e..0xaafd  (239 bytes)
-DATA_patrones_del_texto:
+DATA_patrones_del_rotulo:
 	defb 007h,01fh,03fh,0a0h,07fh,0a0h,0ffh,0feh,0c0h,0f0h,0f8h,0a0h,0fch,0a1h,0feh,0a0h	; aa0e  ..?.............
 	defb 0ffh,0a0h,07fh,03fh,01fh,0a0h,007h,0a0h,0feh,0a0h,0fch,0f8h,0f0h,0a0h,0c0h,0a5h	; aa1e  ...?............
 	defb 0ffh,0feh,0a5h,0ffh,000h,0adh,0feh,000h,03fh,07fh,0a4h,0ffh,000h,0c0h,0e0h,0f0h	; aa2e  ........?.......
@@ -7659,9 +7662,10 @@ DATA_patrones_del_texto:
 	defb 0c6h,0feh,07ch,0feh,0a5h,000h,07ch,003h,0a5h,000h,0c0h,0afh,000h,0ach,000h	; aaee  ..|...|........
 
 ; ----------------------------------------------------------------------
-; DATOS colores_del_texto: Y sus colores, en 0x2698 de cada tercio
+; DATOS colores_del_rotulo: Y los colores del rotulo, en 0x2698 de cada
+;   tercio: el degradado rojo de HOLE IN ONE y el verde de Professional
 ;   0xaafd..0xaba1  (164 bytes)
-DATA_colores_del_texto:
+DATA_colores_del_rotulo:
 	defb 000h,003h,0f9h,0e9h,0f9h,0e1h,000h,002h,0f9h,0e9h,0f9h,0e1h,0f1h,0e1h,000h,003h	; aafd  ................
 	defb 0f6h,0e6h,0f6h,016h,000h,002h,0f1h,0e1h,0f6h,0e6h,0f6h,016h,000h,010h,0f1h,0e1h	; ab0d  ................
 	defb 000h,008h,0f9h,0e9h,000h,004h,0f8h,0e8h,000h,00bh,0fch,0fch,0fch,01ch,000h,003h	; ab1d  ................
@@ -7675,9 +7679,12 @@ DATA_colores_del_texto:
 	defb 000h,004h,016h,016h	; ab9d
 
 ; ----------------------------------------------------------------------
-; DATOS pantalla_de_juego: La tabla de nombres de 0x1800: el panel y el campo
+; DATOS pantalla_de_titulo: La tabla de nombres de 0x1800 de la PANTALLA DE
+;   TITULO: el rotulo puesto en casillas. Gasta 416 de sus 768 casillas en los
+;   cuarenta y cinco tiles de 0xD3 a 0xFF. En partida esta tabla no se usa:
+;   0x67D7 la borra a cero y solo se escriben el panel y el mapa
 ;   0xaba1..0xacfb  (346 bytes)
-DATA_pantalla_de_juego:
+DATA_pantalla_de_titulo:
 	defb 0afh,000h,0adh,000h,0afh,0fdh,0afh,0fdh,0fdh,0d9h,0fdh,0d9h,0d3h,0d8h,0d4h,0d9h	; aba1  ................
 	defb 0a0h,0fdh,0d3h,0d8h,0dah,0fdh,0d9h,0dbh,0dch,0d9h,0fdh,0d3h,0d8h,0d4h,0dbh,0dch	; abb1  ................
 	defb 0d9h,0d3h,0d8h,0dah,0a0h,0fdh,0a1h,0feh,0d9h,0feh,0a0h,0d9h,0feh,0a0h,0d9h,0a0h	; abc1  ................

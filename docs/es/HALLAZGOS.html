@@ -91,6 +91,10 @@ audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
 PRODUCER   F.NAKAMURA
 PROGRAMMER S.IWATA</code></pre>
 <p>La arroba es el símbolo de copyright en la fuente del cartucho, y el <code>&gt;</code> es el punto: se ve en la propia tabla de patrones. El cartucho es de 1986 y sus créditos dicen 1985.</p>
+<h2 id="el-rotulo-y-el-campo-se-turnan-los-mismos-cuarenta-y-cinco-tiles">El rótulo y el campo se turnan los mismos cuarenta y cinco tiles</h2>
+<p>La pantalla de título lleva un rótulo que ocupa media pantalla: <b>HOLE IN ONE</b> en bloque sobre un degradado rojo y <b>Professional</b> en cursiva sobre verde, con una bola de golf haciendo de punto. Y no está guardado aparte: son los tiles <b>0xD3 a 0xFF</b>, los mismos cuarenta y cinco que en partida son el tee, el green y la bandera.</p>
+<p>El cartucho los intercambia entrando <b>en una instrucción o en la siguiente</b>. 0x66D4 es un <code>or 0AFh</code>, o sea los dos bytes <code>F6 AF</code>: llamando ahí, Z se va a cero y las seis llamadas de detrás cargan los 2 KB del bloque grande de 0x9F85, que traen los tiles del juego. Pero 0x66C6 acaba en un <code>jr $+3</code> que cae en <b>0x66D5</b>, el segundo byte de esa misma instrucción, y <code>0xAF</code> por su cuenta es <code>xor a</code>: A se pone a cero, <b>Z se levanta</b> y entonces las seis cargan sólo los 360 bytes de 0xAA0E y 0xAAFD, que son el rótulo.</p>
+<p>(0xCA40) apunta cuál de los dos juegos está puesto, y por eso pulsar F1 en el menú carga los del juego para poder dibujar el marcador y luego devuelve los del rótulo. La pantalla de título gasta <b>416 de sus 768 casillas</b> en esos cuarenta y cinco tiles.</p>
 <h2 id="el-rival-no-calcula-el-golpe-lo-ensaya">El rival no calcula el golpe: lo ensaya</h2>
 <p>Es el hallazgo grande. Cuando le toca jugar al ordenador, 0x5B39 le sortea unos valores de partida —fuerza entre 0x18 y 0x1B, curva entre 0x19 y 0x20, el ángulo hacia la bandera y un palo sacado de dividir la distancia por ocho— y entonces entra en el bucle de 0x5BB4, que <b>juega el golpe entero con la física de verdad</b>.</p>
 <p>Al acabar mira dónde ha caído la bola y reacciona:</p>

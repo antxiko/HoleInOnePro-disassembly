@@ -87,9 +87,14 @@ cartucho por 6 KB de tabla.
 Y hay un segundo modo de carga escondido en el mismo sitio. 0x66D4 empieza con un
 `or 0AFh`, que son los bytes `F6 AF`. Entrando en **0x66D5** —el segundo byte de
 esa instrucción— lo que se ejecuta es `xor a` suelto: A se pone a cero, Z se
-levanta y las seis llamadas cargan sólo la cola de cada tercio, los 360 bytes de
-la fuente, en vez del tercio entero. 0x6788 lo usa para devolver la letra
-después de enseñar el marcador, sin repintar los gráficos.
+levanta y las seis llamadas cargan sólo los 360 bytes de la cola de cada tercio,
+que son los tiles **0xD3 a 0xFF**.
+
+Y esos cuarenta y cinco tiles son **el rótulo del título**. Los mismos que en
+partida son el tee, el green y la bandera. El cartucho los intercambia entrando
+en una instrucción o en la siguiente, y (0xCA40) apunta cuál de los dos juegos
+está puesto: por eso pulsar F1 en el menú carga los del juego para poder dibujar
+el marcador y luego devuelve los del rótulo.
 
 ## Los once bloques comprimidos
 

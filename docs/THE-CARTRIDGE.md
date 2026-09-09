@@ -88,9 +88,14 @@ and three of colour — and all three of each kind decompress **the same source*
 And there is a second loading mode hidden in the same place. 0x66D4 begins with
 an `or 0AFh`, which is the two bytes `F6 AF`. Entering at **0x66D5** — the second
 byte of that instruction — what runs is a bare `xor a`: A goes to zero, Z is set
-and the six calls load only the tail of each third, the 360 bytes that carry the
-font, instead of the whole third. 0x6788 uses it to restore the lettering after
-showing the scorecard, without repainting the graphics.
+and the six calls load only the 360-byte tail of each third, which is tiles
+**0xD3 to 0xFF**.
+
+And those forty-five tiles are **the title wordmark**. The same ones that in play
+are the tee, the green and the flag. The cartridge swaps them by entering one
+instruction or the next, and (0xCA40) records which of the two sets is in place:
+that is why pressing F1 at the menu loads the playing tiles so the scorecard can
+be drawn, and then puts the wordmark's back.
 
 ## The eleven compressed blocks
 

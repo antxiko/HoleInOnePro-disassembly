@@ -54,7 +54,7 @@ comes out of openMSX:
             -script tools/omsx_vram.tcl
 
 and then `make vram` compares, byte for byte, the VRAM `tools/graficos.py`
-builds against the real one. **15,184 of 15,184** match across patterns, colour,
+builds against the real one. **28,240 of 28,240** match across patterns, colour,
 sprites and all THREE name tables. The 17 cells that differ are the figures the
 game writes as it plays: the TOP, the shot counts, the hole number, the distance, the
 par, the wind and the slope.

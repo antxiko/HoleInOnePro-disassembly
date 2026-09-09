@@ -55,7 +55,7 @@ openMSX:
             -script tools/omsx_vram.tcl
 
 y luego `make vram` compara byte a byte la VRAM que monta `tools/graficos.py`
-con la de verdad. Salen **15.184 de 15.184** iguales en patrones, color,
+con la de verdad. Salen **28.240 de 28.240** iguales en patrones, color,
 sprites y las TRES tablas de nombres. Las 17 casillas que bailan son las
 cifras que el juego escribe en marcha: el TOP, los golpes, el número de hoyo, la distancia,
 el par, el viento y el desnivel.

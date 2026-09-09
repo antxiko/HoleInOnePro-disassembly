@@ -155,10 +155,25 @@ def monta_vram(rom, org):
     return v
 
 
-def fondo_del_menu(rom, org, v):
-    """0x66C6: el fondo decorativo, en la tabla de nombres de 0x1800. Solo se
-    usa en la pantalla de creditos y en la de menu."""
+def pantalla_de_titulo(rom, org, v):
+    """0x66C6: la PANTALLA DE TITULO, con su rotulo.
+
+    Son dos cosas, y la segunda es la que importa. Primero descomprime la tabla
+    de nombres de 0xABA1, que es el dibujo del rotulo puesto en casillas. Y
+    luego cae en 0x66D5 -el `jr $+3` de 0x66D2 salta al SEGUNDO byte del
+    `or 0afh`, que suelto es un `xor a`- y eso carga 0xAA0E y 0xAAFD sobre
+    0x0698 y 0x2698 de cada tercio, o sea sobre los tiles 0xD3 a 0xFF.
+
+    Esos cuarenta y cinco tiles son el rotulo. En partida, esos mismos tiles
+    los ocupan el tee, el green y la bandera, que vienen del bloque grande de
+    0x9F85; el cartucho los intercambia entrando en una instruccion o en la
+    siguiente. Y la pantalla de titulo gasta 416 de sus 768 casillas en ellos.
+    """
     rachas(rom, org, 0xABA1, NOMBRES, 0x1B00, v)
+    for base in (0x0000, 0x0800, 0x1000):
+        rachas(rom, org, 0xAA0E, base + 0x698, base + 0x800, v)
+    for base in (0x2000, 0x2800, 0x3000):
+        parejas(rom, org, 0xAAFD, base + 0x698, base + 0x800, v)
 
 
 def escribe_el_panel(rom, org, v):
@@ -471,6 +486,37 @@ ZONAS = [
 ]
 
 
+def comprueba_el_titulo(rom, org, carpeta):
+    """La pantalla de TITULO contra la del emulador, si hay volcado suyo.
+
+    Es la que lleva el rotulo, y no sale en los volcados por reloj del arranque
+    porque el cartucho se va a la exhibicion de los dieciocho hoyos y tarda mas
+    de un minuto en llegar al menu. El volcado se saca con tools/omsx_menu.tcl,
+    que pulsa el espacio para cortarla.
+    """
+    if not os.path.isdir(carpeta):
+        return None
+    volcados = sorted(f for f in os.listdir(carpeta) if f.endswith(".bin"))
+    if not volcados:
+        return None
+    v = monta_vram(rom, org)
+    pantalla_de_titulo(rom, org, v)
+    cuatro_filas(rom, org, 0x5224, v)
+    rotulos_del_menu(rom, org, v)
+    zonas = [z for z in ZONAS if z[1] < 0x1800 or 0x2000 <= z[1] < 0x3800]
+    zonas.append(("tabla de nombres 1 (titulo y menu)", 0x1800, 0x1B00))
+    mejor = None
+    for nombre in volcados:
+        with open(os.path.join(carpeta, nombre), "rb") as f:
+            real = f.read()
+        det = [(e, sum(1 for i in range(a, b) if v[i] != real[i]), b - a)
+               for e, a, b in zonas]
+        fal = sum(d[1] for d in det)
+        if mejor is None or fal < mejor[1]:
+            mejor = (nombre, fal, sum(d[2] for d in det), det)
+    return mejor
+
+
 def comprueba(rom, org, carpeta):
     v = monta_vram(rom, org)
     # El volcado es de una vuelta en marcha, con el hoyo 1 de QUEEN SIDE en
@@ -521,6 +567,19 @@ def comprueba(rom, org, carpeta):
           " los dos")
     print("       jugadores, el numero de hoyo, la distancia, el par, el viento"
           " y el desnivel.")
+    t = comprueba_el_titulo(rom, org, os.path.join(
+        os.path.dirname(carpeta.rstrip("/\\")), "omsx-menu"))
+    if t is None:
+        print()
+        print("  (sin volcado de la pantalla de titulo en work/omsx-menu;"
+              " se saca con tools/omsx_menu.tcl)")
+    else:
+        print()
+        print("LA PANTALLA DE TITULO, contra %s:" % t[0])
+        for e, n, p in t[3]:
+            print("  %-40s %5d de %5d distintos" % (e, n, p))
+        print("  ---- %d bytes distintos de %d" % (t[1], t[2]))
+        fallos += t[1]
     return 0 if fallos == 0 else 1
 
 
@@ -538,15 +597,16 @@ def main(argv):
     v = monta_vram(rom, org)
 
     c = bytearray(v)
-    fondo_del_menu(rom, org, c)
+    pantalla_de_titulo(rom, org, c)
     cuatro_filas(rom, org, 0x51E5, c)
     pantalla(c, os.path.join(sal, "creditos.png"))
     m = bytearray(v)
-    fondo_del_menu(rom, org, m)
+    pantalla_de_titulo(rom, org, m)
     cuatro_filas(rom, org, 0x5224, m)
     rotulos_del_menu(rom, org, m)
     pantalla(m, os.path.join(sal, "menu.png"))
     recorta(m, os.path.join(sal, "opciones.png"), 18, 4, 5, 22)
+    recorta(m, os.path.join(sal, "rotulo.png"), 1, 15, 1, 30, esc=2)
 
     escribe_el_panel(rom, org, v)                 # de aqui en adelante, en juego
     numera_el_marcador(rom, org, v)
@@ -558,7 +618,6 @@ def main(argv):
     numera_el_marcador(rom, org, n)
     recorta(n, os.path.join(sal, "hal_country_club.png"), 0, 2, 1, 30,
             base=NOMBRES2)
-    rotulo(rom, org, v, os.path.join(sal, "rotulo.png"))
     golfistas(rom, org, v, os.path.join(sal, "golfistas_1.png"), 0)
     golfistas(rom, org, v, os.path.join(sal, "golfistas_2.png"), 18)
 

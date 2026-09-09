@@ -7,7 +7,7 @@ autocontenida, con las imagenes embebidas como data URI.
 Las imagenes NO son ilustraciones: las dibuja tools/graficos.py a partir de los
 propios bytes de la ROM, ejecutando en Python los mismos descompresores, el
 mismo interprete de texto y el mismo interprete de guiones de hoyo que corre el
-Z80. Y estan comprobadas contra la VRAM de openMSX: 15.184 bytes de patrones,
+Z80. Y estan comprobadas contra la VRAM de openMSX: 28.240 bytes de patrones,
 color, sprites y tablas de nombres, sin una sola diferencia. Ninguna se ha
 retocado.
 
@@ -35,7 +35,7 @@ PAR = 72
 METROS_Q = 6166
 METROS_K = 6290
 GOLFISTAS = 35
-VRAM = 15184
+VRAM = 28240
 
 
 def mil(n, idioma):
@@ -52,8 +52,8 @@ TXT = {
               "ROM</b>, ejecutando en Python los mismos descompresores y los "
               "mismos int&eacute;rpretes que corre el Z80. Y no valen por "
               "&laquo;verse bien&raquo;: la VRAM montada as&iacute; se compara "
-              "byte a byte contra la de openMSX y coinciden <b>15.184 de "
-              "15.184</b>. El listado y las cifras salen del binario y se "
+              "byte a byte contra la de openMSX y coinciden <b>28.240 de "
+              "28.240</b>. El listado y las cifras salen del binario y se "
               "reproducen con <code>make</code>.",
         claim="Dos campos de dieciocho hoyos, un editor para hacerte el tuyo y "
               "treinta y cinco profesionales de verdad contra los que jugar, "
@@ -99,7 +99,7 @@ TXT = {
               "decompressors and the same interpreters the Z80 runs. And they "
               "do not count because they &ldquo;look right&rdquo;: the VRAM "
               "built this way is compared byte for byte against openMSX's and "
-              "<b>15,184 of 15,184</b> match. The listing and the numbers come "
+              "<b>28,240 of 28,240</b> match. The listing and the numbers come "
               "from the binary and are reproducible with <code>make</code>.",
         claim="Two eighteen-hole courses, an editor to build your own and "
               "thirty-five real tour professionals to play against, in 32 KB. "
@@ -140,6 +140,28 @@ TXT = {
 
 HALLAZGOS = {
     "es": [
+        ("El r&oacute;tulo y el campo se turnan los mismos cuarenta y cinco tiles",
+         "<p>La pantalla de t&iacute;tulo lleva un r&oacute;tulo que ocupa media "
+         "pantalla: <b>HOLE IN ONE</b> en bloque sobre un degradado rojo y "
+         "<b>Professional</b> en cursiva sobre verde, con una bola de golf "
+         "haciendo de punto. Y no est&aacute; guardado aparte: son los tiles "
+         "<b>0xD3 a 0xFF</b>, los mismos cuarenta y cinco que en partida son el "
+         "tee, el green y la bandera.</p>"
+         "<p>El cartucho los intercambia entrando <b>en una instrucci&oacute;n o "
+         "en la siguiente</b>. 0x66D4 es un <code>or 0AFh</code>, o sea los dos "
+         "bytes <code>F6 AF</code>: llamando ah&iacute;, Z se va a cero y las "
+         "seis llamadas de detr&aacute;s cargan los 2 KB del bloque grande de "
+         "0x9F85, que traen los tiles del juego. Pero 0x66C6 acaba en un "
+         "<code>jr $+3</code> que cae en <b>0x66D5</b>, el <b>segundo byte de "
+         "esa misma instrucci&oacute;n</b>, y <code>0xAF</code> por su cuenta es "
+         "<code>xor a</code>: A se pone a cero, <b>Z se levanta</b> y entonces "
+         "las seis cargan s&oacute;lo los 360 bytes de 0xAA0E y 0xAAFD, que son "
+         "el r&oacute;tulo.</p>"
+         "<p>(0xCA40) apunta cu&aacute;l de los dos juegos est&aacute; puesto, y "
+         "por eso pulsar F1 en el men&uacute; carga los del juego para poder "
+         "dibujar el marcador y luego devuelve los del r&oacute;tulo. La "
+         "pantalla de t&iacute;tulo gasta <b>416 de sus 768 casillas</b> en esos "
+         "cuarenta y cinco tiles.</p>"),
         ("El rival no calcula el golpe: lo ENSAYA",
          "<p>Lo que hace el ordenador cuando le toca jugar no es resolver una "
          "ecuaci&oacute;n. 0x5B39 le sortea unos valores de partida &mdash;una "
@@ -278,6 +300,26 @@ HALLAZGOS = {
          "dentro. Es c&oacute;digo muerto del editor.</p>"),
     ],
     "en": [
+        ("The wordmark and the course take turns with the same forty-five tiles",
+         "<p>The title screen carries a wordmark that fills half the screen: "
+         "<b>HOLE IN ONE</b> in block capitals over a red gradient and "
+         "<b>Professional</b> in a script face over green, with a golf ball for "
+         "a dot. And it is not stored separately: it is tiles <b>0xD3 to "
+         "0xFF</b>, the same forty-five that in play are the tee, the green and "
+         "the flag.</p>"
+         "<p>The cartridge swaps them by entering <b>one instruction or the "
+         "next</b>. 0x66D4 is an <code>or 0AFh</code>, that is the two bytes "
+         "<code>F6 AF</code>: call there and Z goes clear, and the six calls "
+         "behind it load the 2 KB block at 0x9F85, which carries the playing "
+         "tiles. But 0x66C6 ends in a <code>jr $+3</code> that lands on "
+         "<b>0x66D5</b>, the <b>second byte of that same instruction</b>, and "
+         "<code>0xAF</code> on its own is <code>xor a</code>: A goes to zero, "
+         "<b>Z is set</b>, and then the six load only the 360 bytes at 0xAA0E "
+         "and 0xAAFD, which are the wordmark.</p>"
+         "<p>(0xCA40) records which of the two sets is in place, which is why "
+         "pressing F1 at the menu loads the playing tiles to draw the scorecard "
+         "and then puts the wordmark's back. The title screen spends <b>416 of "
+         "its 768 cells</b> on those forty-five tiles.</p>"),
         ("The opponent does not compute its shot: it REHEARSES it",
          "<p>What the computer does on its turn is not solve an equation. "
          "0x5B39 rolls it some starting values &mdash; a power between 0x18 "
@@ -410,28 +452,23 @@ HALLAZGOS = {
 
 GALERIA = [
     ("rotulo.png",
-     "<b>El cartucho no tiene r&oacute;tulo de t&iacute;tulo</b>: su portada "
-     "son los cr&eacute;ditos y el men&uacute;. As&iacute; que el de la "
-     "cabecera de esta p&aacute;gina est&aacute; montado con sus propias "
-     "piezas &mdash;el recuadro del panel, con sus ocho casillas de esquina y "
-     "lado, y las letras de su fuente&mdash; y con sus propios textos: "
-     "<i>HOLE IN ONE</i> es el mensaje de 0x4C0B, el que sale al meterla de un "
-     "golpe, y <i>PROFESSIONAL</i> el r&oacute;tulo de nivel de 0x527A",
-     "<b>The cartridge has no title wordmark</b>: its front page is the "
-     "credits and the menu. So the one in this page's header is built from its "
-     "own pieces &mdash; the panel's frame, with its eight corner and side "
-     "tiles, and the letters of its font &mdash; and from its own text: "
-     "<i>HOLE IN ONE</i> is the message at 0x4C0B, the one that comes up when "
-     "you ace a hole, and <i>PROFESSIONAL</i> the level label at 0x527A"),
+     "<b>El r&oacute;tulo</b>, dibujado desde la ROM: la tabla de nombres de "
+     "0xABA1 con los tiles de 0xAA0E encima. Comprobado contra el emulador: "
+     "las seis tablas de patrones y color y la tabla de nombres entera, "
+     "<b>13.056 bytes sin una diferencia</b>",
+     "<b>The wordmark</b>, drawn from the ROM: the name table at 0xABA1 with "
+     "the tiles from 0xAA0E on top. Checked against the emulator: the six "
+     "pattern and colour tables and the whole name table, <b>13,056 bytes "
+     "without a single difference</b>"),
     ("creditos.png",
-     "<b>La portada del cartucho</b>, montada con sus propios pasos: el fondo "
-     "de 0xABA1 descomprimido y encima las cuatro filas de veintiun caracteres "
+     "<b>La portada del cartucho</b>, montada con sus propios pasos: el "
+     "r&oacute;tulo de 0xABA1 y 0xAA0E y encima las cuatro filas de veintiun caracteres "
      "que 0x51BF suelta desde 0x1A46. Dice qui&eacute;n lo hizo: "
      "<b>&copy; HAL LABORATORY 1985</b>, producido por <b>F. NAKAMURA</b> y "
      "programado por <b>S. IWATA</b>. La arroba es el s&iacute;mbolo de "
      "copyright de esta fuente, y el <code>&gt;</code> es el punto",
      "<b>The cartridge's front page</b>, built with its own steps: the "
-     "decompressed background from 0xABA1 and, on top, the four rows of "
+     "wordmark from 0xABA1 and 0xAA0E and, on top, the four rows of "
      "twenty-one characters 0x51BF lays down from 0x1A46. It says who made it: "
      "<b>&copy; HAL LABORATORY 1985</b>, produced by <b>F. NAKAMURA</b> and "
      "programmed by <b>S. IWATA</b>. The at sign is this font's copyright "

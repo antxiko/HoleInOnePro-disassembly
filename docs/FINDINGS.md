@@ -17,6 +17,27 @@ The at sign is the copyright symbol in the cartridge's font, and `>` is its full
 stop: you can see both in the pattern table itself. The cartridge is from 1986
 and its credits say 1985.
 
+## The wordmark and the course take turns with the same forty-five tiles
+
+The title screen carries a wordmark that fills half the screen: **HOLE IN ONE**
+in block capitals over a red gradient and **Professional** in a script face over
+green, with a golf ball for a dot. And it is not stored separately: it is tiles
+**0xD3 to 0xFF**, the same forty-five that in play are the tee, the green and the
+flag.
+
+The cartridge swaps them by entering **one instruction or the next**. 0x66D4 is
+an `or 0AFh`, the two bytes `F6 AF`: call there and Z goes clear, and the six
+calls behind it load the 2 KB block at 0x9F85, which carries the playing tiles.
+But 0x66C6 ends in a `jr $+3` that lands on **0x66D5**, the second byte of that
+same instruction, and `0xAF` on its own is `xor a`: A goes to zero, **Z is set**,
+and then the six load only the 360 bytes at 0xAA0E and 0xAAFD, which are the
+wordmark.
+
+(0xCA40) records which of the two sets is in place, which is why pressing F1 at
+the menu loads the playing tiles to draw the scorecard and then puts the
+wordmark's back. The title screen spends **416 of its 768 cells** on those
+forty-five tiles.
+
 ## The opponent does not compute its shot: it rehearses it
 
 This is the big one. When it is the computer's turn, 0x5B39 rolls it some
